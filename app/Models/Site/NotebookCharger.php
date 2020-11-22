@@ -1,0 +1,244 @@
+<?php
+
+namespace App\Models\Site;
+
+use Illuminate\Database\Eloquent\Model;
+use App\Helpers\Paginator;
+
+class NotebookCharger extends Model
+{
+    public function getListData($request)
+    {
+      $data['productsExist'] = false;
+
+      $numOfProductsToView = 15;
+      $supportedOrders = [1, 2, 3, 4];
+      $viewSupportedValues = [6, 9, 12, 15, 18, 21, 24, 27, 30];
+      $priceRange = BaseModel::getPriceRange(self::class);
+
+      $parameters = $request -> all(); // user input
+
+      $validator = \Validator::make($parameters, ['active-page' => 'required|integer',
+                                                  'price-from' => 'required|integer',
+                                                  'price-to' => 'required|integer',
+                                                  'order' => 'required|integer',
+                                                  'numOfProductsToShow' => 'required|integer',
+                                                  'stock-type' => 'required|string',
+                                                  'condition' => 'required|string',
+                                                  'manufacturer' => 'required|string']);
+
+      if(!$validator -> fails() && !is_null($priceRange))
+      {
+        $numOfProductsToView = abs((int) $parameters['numOfProductsToShow']);
+        $productsOrder = abs((int) $parameters['order']);
+
+        if(in_array($numOfProductsToView, $viewSupportedValues))
+        {
+          $priceFrom = abs((int) $parameters['price-from']);
+          $priceTo = abs((int) $parameters['price-to']);
+
+          $priceFromIsInRange = $priceFrom >= $priceRange -> notebookChargerMinPrice && $priceFrom <= $priceRange -> notebookChargerMaxPrice;
+          $priceToIsInRange = $priceTo >= $priceRange -> notebookChargerMinPrice && $priceTo <= $priceRange -> notebookChargerMaxPrice;
+
+          if($priceFromIsInRange && $priceToIsInRange)
+          {
+            $conditions = \DB::table('conditions') -> get();
+            $conditionExists = $conditions -> count() != 0;
+
+            $stockTypes = \DB::table('stock_types') -> get();
+            $stockTypeExists = $stockTypes -> count() != 0;
+
+            $manufacturers = \DB::table('notebooks_manufacturers') -> get();
+            $manufacturersExist = $manufacturers -> count() != 0;
+
+            if($manufacturersExist && $stockTypeExists && $conditionExists)
+            {
+              $manufacturersParts = array_map('intval', explode(':', $parameters['manufacturer']));
+              $conditionsParts = array_map('intval', explode(':', $parameters['condition']));
+              $stockTypesParts = array_map('intval', explode(':', $parameters['stock-type']));
+
+              $columns = ['notebook_chargers.id', 'title', 'mainImage', 'discount', 'price'];
+              $manufacturersNumbers = $conditionNumbers = $stockTypesNumbers = [];
+
+              $query = \DB::table('notebook_chargers') -> select($columns) -> where('visibility', 1);
+
+              foreach($conditions as $value) $conditionNumbers[] = $value -> id;
+              foreach($stockTypes as $value) $stockTypesNumbers[] = $value -> id;
+              foreach($manufacturers as $value) $manufacturersNumbers[] = $value -> id;
+
+              if(array_intersect($conditionsParts, $conditionNumbers) == $conditionsParts) $query = $query -> whereIn('conditionId', $conditionsParts);
+              if(array_intersect($stockTypesParts, $stockTypesNumbers) == $stockTypesParts) $query = $query -> whereIn('stockTypeId', $stockTypesParts);
+              if(array_intersect($manufacturersParts, $manufacturersNumbers) == $manufacturersParts) $query = $query -> whereIn('notebookManufacturerId', $manufacturersParts);
+
+              $query = $query -> where('price', '>=', $priceFrom) -> where('price', '<=', $priceTo);
+
+              if(in_array($productsOrder, $supportedOrders))
+              {
+                $orderNumber = !($productsOrder % 2);
+                $orderColumn = $productsOrder == 1 || $productsOrder == 2 ? 'price' : 'timestamp';
+
+                $query = $query -> orderBy($orderColumn, $orderNumber == 0 ? 'desc' : 'asc');
+              }
+
+              $currentPage = abs((int) $parameters['active-page']);
+              $totalNumOfProducts = $query -> count();
+
+              if($currentPage != 0 && $totalNumOfProducts != 0)
+              {
+                $paginator = \Paginator::build($totalNumOfProducts, 3, $numOfProductsToView, $currentPage, 2, 0);
+
+                $data['pages'] = $paginator -> pages;
+                $data['maxPage'] = $paginator -> maxPage;
+                $data['currentPage'] = $currentPage;
+
+                $data['products'] = $query -> skip(($currentPage - 1) * $numOfProductsToView) -> take($numOfProductsToView) -> get();
+                $data['productsExist'] = true;
+
+                $data['products'] -> map(function($product){
+
+                   $product -> newPrice = $product -> price - $product -> discount;
+                });
+
+                $data['products'] = $data['products'] -> chunk(3);
+              }
+            }
+          }
+        }
+      }
+
+      return $data;
+    }
+
+    public function getNotebookChargersData()
+    {
+      $numOfProductsToView = 9;
+      $adjacent = 3;
+      $currentPage = 1;
+      $leftBoundary = 2;
+      $rightBoundary = 0;
+      $chunkSize = 3;
+
+      $data['notebookChargersExist'] = false;
+
+      $data['configuration']['productPriceRange'] = BaseModel::getPriceRange(self::class);
+      $data['configuration']['productPriceRangeExists'] = !is_null($data['configuration']['productPriceRange']);
+
+      if($data['configuration']['productPriceRangeExists'])
+      {
+        $productMinPrice = $data['configuration']['productPriceRange'] -> notebookChargerMinPrice;
+        $productMaxPrice = $data['configuration']['productPriceRange'] -> notebookChargerMaxPrice;
+
+        $columns = ['notebook_chargers.id', 'title', 'mainImage', 'price', 'discount', 'code'];
+
+        $query = \DB::table('notebook_chargers') -> select($columns)
+                                                 -> where('visibility', 1)
+                                                 -> where('price', '>=', $productMinPrice)
+                                                 -> where('price', '<=', $productMaxPrice);
+
+        $data['notebookChargers'] = $query -> take($numOfProductsToView) -> get();
+        $data['notebookChargersExist'] = !$data['notebookChargers'] -> isEmpty();
+
+        if($data['notebookChargersExist'])
+        {
+          $data['configuration']['manufacturers'] = \DB::table('notebooks_manufacturers') -> get();
+          $data['configuration']['stockTypes'] = \DB::table('stock_types') -> get();
+          $data['configuration']['conditions'] = \DB::table('conditions') -> get();
+
+          foreach($data['notebookChargers'] as $key => $value)
+
+          $data['notebookChargers'][$key] -> newPrice = $value -> price - $value -> discount;
+
+
+          foreach($data['configuration']['manufacturers'] as $key => $value)
+
+          $data['configuration']['manufacturers'][$key] -> numOfProducts = \DB::table('notebook_chargers') -> where('notebookManufacturerId', $value -> id)
+                                                                                                           -> where('visibility', 1)
+                                                                                                           -> where('price', '>=', $productMinPrice)
+                                                                                                           -> where('price', '<=', $productMaxPrice)
+                                                                                                           -> count();
+          foreach($data['configuration']['conditions'] as $key => $value)
+
+          $data['configuration']['conditions'][$key] -> numOfProducts = \DB::table('notebook_chargers') -> where('conditionId', $value -> id)
+                                                                                                        -> where('visibility', 1)
+                                                                                                        -> where('price', '>=', $productMinPrice)
+                                                                                                        -> where('price', '<=', $productMaxPrice)
+                                                                                                        -> count();
+
+          foreach($data['configuration']['stockTypes'] as $key => $value)
+
+          $data['configuration']['stockTypes'][$key] -> numOfProducts = \DB::table('notebook_chargers') -> where('stockTypeId', $value -> id)
+                                                                                                        -> where('visibility', 1)
+                                                                                                        -> where('price', '>=', $productMinPrice)
+                                                                                                        -> where('price', '<=', $productMaxPrice)
+                                                                                                        -> count();
+
+          $totalNumOfProducts = $query -> count();
+          $paginator = \Paginator::build($totalNumOfProducts, 3, $numOfProductsToView, $currentPage, 2, 0);
+
+          $data['pages'] = $paginator -> pages;
+          $data['maxPage'] = $paginator -> maxPage;
+          $data['currentPage'] = $currentPage;
+
+          $data['notebookChargers'] = $data['notebookChargers'] -> chunk($chunkSize);
+        }
+      }
+
+      return $data;
+    }
+
+    public function getNotebookChargerData($id, $seoFields)
+    {
+      $columns = ['notebook_chargers.id', 'code', 'title', 'mainImage', 'discount', 'price', 'description', 'warrantyDuration', 'warrantyId', 'stockTypeId', 'conditionId', 'seoKeywords', 'seoDescription', 'quantity'];
+
+      $data['notebookCharger'] = \DB::table('notebook_chargers') -> select($columns) -> where('id', $id) -> where('visibility', 1) -> get() -> first();
+      $data['notebookChargerExists'] = !is_null($data['notebookCharger']);
+
+      $numOfProductsToView = 12;
+      $pricePart = 0.2;
+
+      if($data['notebookChargerExists'])
+      {
+        $seoFields -> description = $data['notebookCharger'] -> seoDescription;
+        $seoFields -> keywords = $data['notebookCharger'] -> seoKeywords;
+        $seoFields -> title = $data['notebookCharger'] -> title;
+
+        $stockData = \DB::table('stock_types') -> where('id', '=', $data['notebookCharger'] -> stockTypeId) -> get() -> first();
+
+        $data['images'] = \DB::table('notebook_chargers_images') -> where('notebookChargerId', '=', $data['notebookCharger'] -> id) -> get();
+        $data['imagesExist'] = !$data['images'] -> isEmpty();
+
+        $data['stockTitle'] = $stockData -> stockTitle;
+        $data['stockStatusColor'] = $stockData -> statusColor;
+        $data['enableAddToCartButton'] = $stockData -> enableAddToCartButton;
+
+        $data['conditionTitle'] = \DB::table('conditions') -> where('id', '=', $data['notebookCharger'] -> conditionId) -> get() -> first() -> conditionTitle;
+        $data['warrantyTitle'] = \DB::table('warranties') -> where('id', '=', $data['notebookCharger'] -> warrantyId) -> get() -> first() -> durationUnit;
+
+        $data['notebookCharger'] -> newPrice = $data['notebookCharger'] -> price - $data['notebookCharger'] -> discount;
+        $data['notebookCharger'] -> categoryId = BaseModel::getTableAliasByModelName(self::class);
+
+        $percent = $data['notebookCharger'] -> newPrice * $pricePart;
+        $leftRange = (int) ($data['notebookCharger'] -> newPrice - $percent);
+        $rightRange = (int) ($data['notebookCharger'] -> newPrice + $percent);
+        $fields = ['notebook_chargers.id', 'title', 'mainImage', 'discount', 'price'];
+
+        $data['recommendedNotebookChargers'] = \DB::table('notebook_chargers') -> select($fields)
+                                                                               -> where('visibility', 1)
+                                                                               -> where('price', '<=', $rightRange)
+                                                                               -> where('price', '>=', $leftRange)
+                                                                               -> where('notebook_chargers.id', '!=', $data['notebookCharger'] -> id)
+                                                                               -> take($numOfProductsToView)
+                                                                               -> get();
+
+        $data['recommendedNotebookChargersExist'] = !$data['recommendedNotebookChargers'] -> isEmpty();
+
+        if($data['recommendedNotebookChargersExist'])
+
+        foreach($data['recommendedNotebookChargers'] as $key => $value)
+
+        $data['recommendedNotebookChargers'][$key] -> newPrice = $value -> price - $value -> discount;
+      }
+
+      return $data;
+    }
+}

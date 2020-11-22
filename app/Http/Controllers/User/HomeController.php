@@ -11,17 +11,6 @@ use App\Http\Requests\StockTypeInsertRequest;
 class HomeController extends \App\Http\Controllers\Controller
 {
     /**
-     * Create a new controller instance.
-     *
-     * @return void
-     */
-
-    public function __construct()
-    {
-        $this -> middleware(['auth', 'verified']); // modified (added verified middleware)
-    }
-
-    /**
      * Show the application dashboard.
      *
      * @return \Illuminate\Contracts\Support\Renderable

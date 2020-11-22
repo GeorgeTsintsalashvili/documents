@@ -13,29 +13,6 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-// experimental routes
-
-Route::middleware(['checkAge']) -> group(function(){
-
-  Route::get('videos', function(){
-
-      return "<h1>Videos</h1>";
-  });
-
-  Route::get('music', function(){
-
-      return "<h1>Music</h1>";
-  });
-
-});
-
-Route::get('restricted', function(){
-
-    return '<h1>You are not allowed to access this content!</h1>';
-
-}) -> name('restricted');
-
-
 // routes for site namespace
 
 Route::namespace('Site') -> group(function(){
@@ -189,7 +166,7 @@ Route::get('/login', 'Auth\LoginController@showLoginForm');
 
 // user routes
 
-Route::namespace('User') -> prefix('user') -> group(function(){
+Route::middleware(['auth', 'verified']) -> namespace('User') -> prefix('user') -> group(function(){
 
       // invoice routes
 

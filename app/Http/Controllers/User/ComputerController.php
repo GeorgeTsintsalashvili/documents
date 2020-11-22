@@ -24,11 +24,6 @@ use App\Traits\Searchable;
 
 class ComputerController extends Controller
 {
-    public function __construct()
-    {
-       $this -> middleware(['auth', 'verified']);
-    }
-
     public function index(Request $request) // Display a listing of the resource
     {
       $parameters = $request -> only([ 'system-id', 'list-page' ]);

@@ -23,11 +23,6 @@ use App\Traits\Searchable;
 
 class MonitorController extends Controller
 {
-    public function __construct()
-    {
-       $this -> middleware(['auth', 'verified']);
-    }
-
     public function index(Request $request) // Display a listing of the resource
     {
       $parameters = $request -> only([ 'list-page' ]);

@@ -10,11 +10,6 @@ use App\Rules\NaturalNumber;
 
 class AnalyticsController extends Controller
 {
-    public function __construct()
-    {
-        $this -> middleware(['auth', 'verified']);
-    }
-
     public function index()
     {
       $pages = \DB::table('pages') -> select(['id', 'title']) -> get();

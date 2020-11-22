@@ -8,11 +8,6 @@ use App\Rules\NaturalNumber;
 
 class SlideController extends Controller
 {
-    public function __construct()
-    {
-       $this -> middleware(['auth', 'verified']);
-    }
-
     public function index() // display a listing of the resource
     {
        return \View::make('contents.user.slides.index') -> with([

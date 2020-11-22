@@ -13,11 +13,6 @@ use App\Rules\PositiveIntegerOrZero;
 
 class StatementController extends Controller
 {
-    public function __construct()
-    {
-       $this -> middleware(['auth', 'verified']);
-    }
-
     public function index(Request $request)
     {
       date_default_timezone_set('Asia/Tbilisi');

@@ -10,11 +10,6 @@ use App\User;
 
 class UserController extends Controller
 {
-    public function __construct()
-    {
-        $this -> middleware('auth');
-    }
-
     public function changePassword(Request $request)
     {
       $parameters = $request -> only(['current-password', 'new-password', 'new-confirm-password']);

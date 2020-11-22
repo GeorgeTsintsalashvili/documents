@@ -14,11 +14,6 @@ use App\Rules\PositiveIntegerOrZero;
 
 class InvoiceController extends Controller
 {
-    public function __construct()
-    {
-      $this -> middleware(['auth', 'verified']);
-    }
-
     public function index()
     {
       return \View::make('contents.user.invoice.index');

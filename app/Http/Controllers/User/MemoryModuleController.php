@@ -23,11 +23,6 @@ use App\Traits\Searchable;
 
 class MemoryModuleController extends Controller
 {
-    public function __construct()
-    {
-       $this -> middleware(['auth', 'verified']);
-    }
-
     public function index(Request $request) // Display a listing of the resource
     {
 

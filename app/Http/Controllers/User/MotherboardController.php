@@ -23,11 +23,6 @@ use App\Traits\Searchable;
 
 class MotherboardController extends Controller
 {
-    public function __construct()
-    {
-       $this -> middleware(['auth', 'verified']);
-    }
-
     public function index(Request $request) // Display a listing of the resource
     {
       $parameters = $request -> only([ 'manufacturer-id', 'list-page' ]);

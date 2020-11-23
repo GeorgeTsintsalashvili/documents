@@ -5,43 +5,260 @@ namespace App\Http\Controllers\Site;
 use \App\Http\Controllers as Controllers;
 use Illuminate\Http\Request;
 
+use Illuminate\Support\Facades\View;
+use \App\Helpers\Paginator;
+
+use \App\Models\Site\BaseModel;
+use \App\Models\Site\OpticalDiscDrive;
+
 class OpticalDiscDriveController extends Controllers\Controller
 {
     public function getList(Request $request)
     {
-      $model = new \App\Models\Site\OpticalDiscDrive();
+      $data['productsExist'] = false;
 
-      $responseData = $model -> getListData($request);
+      $numOfProductsToView = 6;
+      $supportedOrders = [1, 2, 3, 4];
+      $viewSupportedValues = [6, 9, 12, 15, 18, 21, 24, 27, 30];
+      $priceRange = BaseModel::getPriceRange(OpticalDiscDrive::class);
 
-      return view('contents/site/opticalDiscDrives/getOpticalDiscDrives', ['data' => $responseData]);
+      $parameters = $request -> all(); // user input
+
+      $validator = \Validator::make($parameters, ['active-page' => 'required|integer',
+                                                  'price-from' => 'required|integer',
+                                                  'price-to' => 'required|integer',
+                                                  'order' => 'required|integer',
+                                                  'numOfProductsToShow' => 'required|integer',
+                                                  'stock-type' => 'required|string',
+                                                  'condition' => 'required|string',
+                                                  'destination' => 'required|string']);
+
+      if(!$validator -> fails() && !is_null($priceRange))
+      {
+        $numOfProductsToView = abs((int) $parameters['numOfProductsToShow']);
+        $productsOrder = abs((int) $parameters['order']);
+
+        if(in_array($numOfProductsToView, $viewSupportedValues))
+        {
+          $priceFrom = abs((int) $parameters['price-from']);
+          $priceTo = abs((int) $parameters['price-to']);
+
+          $priceFromIsInRange = $priceFrom >= $priceRange -> opticalDiscDriveMinPrice && $priceFrom <= $priceRange -> opticalDiscDriveMaxPrice;
+          $priceToIsInRange = $priceTo >= $priceRange -> opticalDiscDriveMinPrice && $priceTo <= $priceRange -> opticalDiscDriveMaxPrice;
+
+          if($priceFromIsInRange && $priceToIsInRange)
+          {
+            $conditions = \DB::table('conditions') -> get();
+            $conditionExists = $conditions -> count() != 0;
+
+            $stockTypes = \DB::table('stock_types') -> get();
+            $stockTypeExists = $stockTypes -> count() != 0;
+
+            $opticalDiscDriveTypes = \DB::table('optical_disc_drives_types') -> get();
+            $opticalDiscDriveTypesExist = $opticalDiscDriveTypes -> count() != 0;
+
+            if($opticalDiscDriveTypesExist && $stockTypeExists && $conditionExists)
+            {
+              $opticalDiscDriveTypesParts = array_map('intval', explode(':', $parameters['destination']));
+              $conditionsParts = array_map('intval', explode(':', $parameters['condition']));
+              $stockTypesParts = array_map('intval', explode(':', $parameters['stock-type']));
+
+              $columns = ['optical_disc_drives.id', 'title', 'mainImage', 'discount', 'price'];
+              $opticalDiscDriveTypesNumbers = $conditionNumbers = $stockTypesNumbers = [];
+
+              $query = \DB::table('optical_disc_drives') -> select($columns) -> where('visibility', 1);
+
+              foreach($conditions as $value) $conditionNumbers[] = $value -> id;
+              foreach($stockTypes as $value) $stockTypesNumbers[] = $value -> id;
+              foreach($opticalDiscDriveTypes as $value) $opticalDiscDriveTypesNumbers[] = $value -> id;
+
+              if(array_intersect($conditionsParts, $conditionNumbers) == $conditionsParts) $query = $query -> whereIn('conditionId', $conditionsParts);
+              if(array_intersect($stockTypesParts, $stockTypesNumbers) == $stockTypesParts) $query = $query -> whereIn('stockTypeId', $stockTypesParts);
+              if(array_intersect($opticalDiscDriveTypesParts, $opticalDiscDriveTypesNumbers) == $opticalDiscDriveTypesParts) $query = $query -> whereIn('oddTypeId', $opticalDiscDriveTypesParts);
+
+              $query = $query -> where('price', '>=', $priceFrom) -> where('price', '<=', $priceTo);
+
+              if(in_array($productsOrder, $supportedOrders))
+              {
+                $orderNumber = !($productsOrder % 2);
+                $orderColumn = $productsOrder == 1 || $productsOrder == 2 ? 'price' : 'timestamp';
+
+                $query = $query -> orderBy($orderColumn, $orderNumber == 0 ? 'desc' : 'asc');
+              }
+
+              $currentPage = abs((int) $parameters['active-page']);
+              $totalNumOfProducts = $query -> count();
+
+              if($currentPage != 0 && $totalNumOfProducts != 0)
+              {
+                $paginator = \Paginator::build($totalNumOfProducts, 3, $numOfProductsToView, $currentPage, 2, 0);
+
+                $data['pages'] = $paginator -> pages;
+                $data['maxPage'] = $paginator -> maxPage;
+                $data['currentPage'] = $currentPage;
+
+                $data['products'] = $query -> skip(($currentPage - 1) * $numOfProductsToView) -> take($numOfProductsToView) -> get();
+                $data['productsExist'] = true;
+
+                $data['products'] -> map(function($product){
+
+                   $product -> newPrice = $product -> price - $product -> discount;
+                });
+
+                $data['products'] = $data['products'] -> chunk(3);
+              }
+            }
+          }
+        }
+      }
+
+      return View::make('contents.site.opticalDiscDrives.getOpticalDiscDrives', ['data' => $data]);
     }
 
     public function index()
     {
-      $model = new \App\Models\Site\OpticalDiscDrive();
+      $generalData = BaseModel::getGeneralData();
 
-      $productsPageData = $model -> getOpticalDiscDrivesData();
+      $numOfProductsToView = 6;
+      $adjacent = 3;
+      $currentPage = 1;
+      $leftBoundary = 2;
+      $rightBoundary = 0;
+      $chunkSize = 3;
 
-      $generalData = \App\Models\Site\BaseModel::getGeneralData();
+      $data['configuration']['productPriceRange'] = BaseModel::getPriceRange(OpticalDiscDrive::class);
+      $data['configuration']['productPriceRangeExists'] = !is_null($data['configuration']['productPriceRange']);
+      $data['opticalDiscDrivesExist'] = false;
 
-      \App\Models\Site\BaseModel::collectStatisticalData($model);
+      if($data['configuration']['productPriceRangeExists'])
+      {
+        $productMinPrice = $data['configuration']['productPriceRange'] -> opticalDiscDriveMinPrice;
+        $productMaxPrice = $data['configuration']['productPriceRange'] -> opticalDiscDriveMaxPrice;
 
-      return view('contents/site/opticalDiscDrives/index', ['contentData' => $productsPageData, 'generalData' => $generalData]);
+        $columns = ['optical_disc_drives.id', 'title', 'mainImage', 'discount', 'price', 'typeTitle'];
+
+        $query = \DB::table('optical_disc_drives') -> select($columns)
+                                                   -> join('optical_disc_drives_types', 'optical_disc_drives_types.id', '=', 'optical_disc_drives.oddTypeId')
+                                                   -> where('visibility', 1)
+                                                   -> where('price', '>=', $productMinPrice)
+                                                   -> where('price', '<=', $productMaxPrice);
+
+        $totalNumOfProducts = $query -> count();
+
+        $data['opticalDiscDrivesExist'] = $totalNumOfProducts != 0;
+
+        if($totalNumOfProducts != 0)
+        {
+          $data['configuration']['opticalDiscDrivesTypes'] = \DB::table('optical_disc_drives_types') -> get();
+          $data['configuration']['conditions'] = \DB::table('conditions') -> get();
+          $data['configuration']['stockTypes'] = \DB::table('stock_types') -> get();
+
+          foreach($data['configuration']['opticalDiscDrivesTypes'] as $key => $value)
+          {
+            $data['configuration']['opticalDiscDrivesTypes'][$key] -> numOfProducts = \DB::table('optical_disc_drives') -> where('oddTypeId', $value -> id)
+                                                                                                                        -> where('visibility', 1)
+                                                                                                                        -> where('price', '>=', $productMinPrice)
+                                                                                                                        -> where('price', '<=', $productMaxPrice)
+                                                                                                                        -> count();
+          }
+
+          foreach($data['configuration']['conditions'] as $key => $value)
+          {
+            $data['configuration']['conditions'][$key] -> numOfProducts = \DB::table('optical_disc_drives') -> where('conditionId', $value -> id)
+                                                                                                            -> where('visibility', 1)
+                                                                                                            -> where('price', '>=', $productMinPrice)
+                                                                                                            -> where('price', '<=', $productMaxPrice)
+                                                                                                            -> count();
+          }
+
+          foreach($data['configuration']['stockTypes'] as $key => $value)
+          {
+            $data['configuration']['stockTypes'][$key] -> numOfProducts = \DB::table('optical_disc_drives') -> where('stockTypeId', $value -> id)
+                                                                                                            -> where('visibility', 1)
+                                                                                                            -> where('price', '>=', $productMinPrice)
+                                                                                                            -> where('price', '<=', $productMaxPrice)
+                                                                                                            -> count();
+          }
+
+          $data['opticalDiscDrives'] = $query -> take($numOfProductsToView) -> get();
+
+          foreach($data['opticalDiscDrives'] as $key => $value) $data['opticalDiscDrives'][$key] -> newPrice = $value -> price - $value -> discount;
+
+          $paginator = \Paginator::build($totalNumOfProducts, 3, $numOfProductsToView, $currentPage, 2, 0);
+
+          $data['pages'] = $paginator -> pages;
+          $data['maxPage'] = $paginator -> maxPage;
+          $data['currentPage'] = $currentPage;
+
+          $data['opticalDiscDrives'] = $data['opticalDiscDrives'] -> chunk($chunkSize);
+        }
+      }
+
+      BaseModel::collectStatisticalData(OpticalDiscDrive::class);
+
+      return View::make('contents.site.opticalDiscDrives.index', ['contentData' => $data,
+                                                                  'generalData' => $generalData]);
     }
 
     public function view($id)
     {
-      $model = new \App\Models\Site\OpticalDiscDrive();
+      $generalData = BaseModel::getGeneralData();
 
-      $generalData = \App\Models\Site\BaseModel::getGeneralData();
+      $numOfProductsToView = 12;
+      $productPricePart = 0.2;
+      $columns = ['optical_disc_drives.id', 'code', 'title', 'mainImage', 'discount', 'price', 'description', 'warrantyDuration', 'warrantyId', 'stockTypeId', 'conditionId', 'quantity', 'seoDescription', 'seoKeywords'];
 
-      $viewPageData = $model -> getOpticalDiscDriveData($id, $generalData['seoFields']);
+      $data['opticalDiscDrive'] = \DB::table('optical_disc_drives') -> select($columns) -> where('id', $id) -> where('visibility', 1) -> get() -> first();
+      $data['opticalDiscDriveExists'] = !is_null($data['opticalDiscDrive']);
 
-      if($viewPageData['opticalDiscDriveExists'])
+      if($data['opticalDiscDriveExists'])
       {
-        \App\Models\Site\BaseModel::collectStatisticalData($model);
+        $generalData['seoFields'] -> description = $data['opticalDiscDrive'] -> seoDescription;
+        $generalData['seoFields'] -> keywords = $data['opticalDiscDrive'] -> seoKeywords;
+        $generalData['seoFields'] -> title = $data['opticalDiscDrive'] -> title;
 
-        return view('contents/site/opticalDiscDrives/view', ['contentData' => $viewPageData, 'generalData' => $generalData]);
+        $stockData = \DB::table('stock_types') -> where('id', '=', $data['opticalDiscDrive'] -> stockTypeId) -> get() -> first();
+
+        $data['images'] = \DB::table('optical_disc_drives_images') -> where('opticalDiscDriveId', '=', $data['opticalDiscDrive'] -> id) -> get();
+        $data['imagesExist'] = !$data['images'] -> isEmpty();
+
+        $data['stockTitle'] = $stockData -> stockTitle;
+        $data['stockStatusColor'] = $stockData -> statusColor;
+        $data['enableAddToCartButton'] = $stockData -> enableAddToCartButton;
+
+        $data['conditionTitle'] = \DB::table('conditions') -> where('id', '=', $data['opticalDiscDrive'] -> conditionId) -> get() -> first() -> conditionTitle;
+        $data['warrantyTitle'] = \DB::table('warranties') -> where('id', '=', $data['opticalDiscDrive'] -> warrantyId) -> get() -> first() -> durationUnit;
+
+        $data['opticalDiscDrive'] -> newPrice = $data['opticalDiscDrive'] -> price - $data['opticalDiscDrive'] -> discount;
+        $data['opticalDiscDrive'] -> categoryId = BaseModel::getTableAliasByModelName(OpticalDiscDrive::class);
+
+        $percent = $data['opticalDiscDrive'] -> newPrice * $productPricePart;
+        $leftRange = (int) ($data['opticalDiscDrive'] -> newPrice - $percent);
+        $rightRange = (int) ($data['opticalDiscDrive'] -> newPrice + $percent);
+
+        $fields = ['optical_disc_drives.id', 'title', 'mainImage', 'discount', 'price'];
+
+        $data['recommendedOpticalDiscDrives'] = \DB::table('optical_disc_drives') -> select($fields)
+                                                                                  -> where('visibility', 1)
+                                                                                  -> where('price', '<=', $rightRange)
+                                                                                  -> where('price', '>=', $leftRange)
+                                                                                  -> where('optical_disc_drives.id', '!=', $data['opticalDiscDrive'] -> id)
+                                                                                  -> take($numOfProductsToView)
+                                                                                  -> get();
+
+        $data['recommendedOpticalDiscDrivesExist'] = !$data['recommendedOpticalDiscDrives'] -> isEmpty();
+
+        if($data['recommendedOpticalDiscDrivesExist'])
+        {
+          foreach($data['recommendedOpticalDiscDrives'] as $key => $value)
+
+          $data['recommendedOpticalDiscDrives'][$key] -> newPrice = $value -> price - $value -> discount;
+        }
+
+        BaseModel::collectStatisticalData(OpticalDiscDrive::class);
+
+        return View::make('contents.site.opticalDiscDrives.view', ['contentData' => $data,
+                                                                   'generalData' => $generalData]);
       }
 
       else abort(404);

@@ -6,13 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 
 class BaseModel extends Model
 {
-    public static function collectStatisticalData($model)
+    public static function collectStatisticalData($classFullName)
     {
        $pages = \DB::table('pages') -> get();
 
        if(!$pages -> isEmpty())
        {
-          $classFullName = get_class($model);
           $classShortName = substr($classFullName, strrpos($classFullName, '\\') + 1);
           $pageData = \DB::table('pages') -> select(['id']) -> where('className', '=', $classShortName) -> get() -> first();
 

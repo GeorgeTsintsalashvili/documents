@@ -51,7 +51,7 @@ class ProductController extends Controllers\Controller
         $data['productMaxPrice'] = max($priceValues);
 
         $tablesData = \DB::table('tables') -> get();
-        $columns = ['price', 'discount', 'id', 'title', 'mainImage'];
+        $columns = ['pathPart', 'price', 'discount', 'id', 'title', 'mainImage'];
         $indexedColumns = ['title', 'description'];
 
         $searchQuery = $parameters['query'];
@@ -112,13 +112,10 @@ class ProductController extends Controllers\Controller
                   foreach($categoryIdParts as $categoryIdentifier)
                   {
                     $categoryTableData = $tablesData -> where('alias', $categoryIdentifier) -> first();
-
                     $tableName = $categoryTableData -> name;
-                    $pathPart = \Str::camel($tableName);
 
                     $tempQueryBuilder = \DB::table($tableName);
-                    $tempQueryBuilder = Searchable::booleanSearch($tempQueryBuilder, $columns, $searchQuery, $indexedColumns);
-                    $tempQueryBuilder = $tempQueryBuilder -> addSelect(\DB::raw("'$pathPart' as `pathPart`")) -> where('visibility', 1);
+                    $tempQueryBuilder = Searchable::booleanSearch($tempQueryBuilder, $columns, $searchQuery, $indexedColumns)-> where('visibility', 1);
 
                     if(array_intersect($conditionsParts, $conditionIdentifiers) == $conditionsParts) $tempQueryBuilder = $tempQueryBuilder -> whereIn('conditionId', $conditionsParts);
 
@@ -190,7 +187,7 @@ class ProductController extends Controllers\Controller
         $categoryId = $parameters['category-id'];
 
         $tablesData = \DB::table('tables') -> get();
-        $columns = ['price', 'discount', 'id', 'title', 'mainImage'];
+        $columns = ['pathPart', 'price', 'discount', 'id', 'title', 'mainImage'];
         $indexedColumns = ['title', 'description'];
 
         if(!$tablesData -> isEmpty())
@@ -201,7 +198,6 @@ class ProductController extends Controllers\Controller
           if($categoryExists)
           {
              $tableName = $tableDataByCategory -> name;
-             $pathPart = \Str::camel($tableName);
 
              $queryBuilder = \DB::table($tableName);
              $queryBuilder = Searchable::booleanSearch($queryBuilder, $columns, $searchQuery, $indexedColumns);
@@ -212,10 +208,9 @@ class ProductController extends Controllers\Controller
                 $data['productsExist'] = true;
                 $data['products'] = $queryBuilder -> get();
 
-                $data['products'] -> map(function($product) use ($pathPart){
+                $data['products'] -> map(function($product){
 
                     $product -> price = $product -> price - $product -> discount;
-                    $product -> pathPart = $pathPart;
                 });
              }
           }
@@ -227,11 +222,9 @@ class ProductController extends Controllers\Controller
             foreach($tablesData as $table)
             {
               $tableName = $table -> name;
-              $pathPart = \Str::camel($tableName);
 
               $tempQueryBuilder = \DB::table($tableName);
-              $tempQueryBuilder = Searchable::booleanSearch($tempQueryBuilder, $columns, $searchQuery, $indexedColumns);
-              $tempQueryBuilder = $tempQueryBuilder -> addSelect(\DB::raw("'$pathPart' as `pathPart`")) -> where('visibility', 1);
+              $tempQueryBuilder = Searchable::booleanSearch($tempQueryBuilder, $columns, $searchQuery, $indexedColumns) -> where('visibility', 1);
 
               if($primaryQueryBuilder === null) $primaryQueryBuilder = $tempQueryBuilder;
 
@@ -308,7 +301,7 @@ class ProductController extends Controllers\Controller
         $parameters['categoryId'] = trim($parameters['categoryId']);
 
         $tablesData = \DB::table('tables') -> get();
-        $columns = ['price', 'discount', 'id', 'title', 'mainImage'];
+        $columns = ['pathPart', 'price', 'discount', 'id', 'title', 'mainImage'];
         $indexedColumns = ['title', 'description'];
 
         if(!$tablesData -> isEmpty())
@@ -324,7 +317,6 @@ class ProductController extends Controllers\Controller
           if($categoryExists)
           {
             $tableName = $tableDataByCategory -> name;
-            $pathPart = \Str::camel($tableName);
 
             $queryBuilder = \DB::table($tableName);
             $queryBuilder = Searchable::booleanSearch($queryBuilder, $columns, $searchQuery, $indexedColumns);
@@ -351,7 +343,6 @@ class ProductController extends Controllers\Controller
               foreach($data['products'] as $key => $value)
               {
                 $data['products'][$key] -> newPrice = $value -> price - $value -> discount;
-                $data['products'][$key] -> pathPart = $pathPart;
               }
 
               foreach($data['stockTypes'] as $key => $value)
@@ -382,12 +373,10 @@ class ProductController extends Controllers\Controller
             foreach($tablesData as $table)
             {
               $tableName = $table -> name;
-              $pathPart = \Str::camel($tableName);
               $categoryId = $table -> alias;
 
               $tempQueryBuilder = \DB::table($tableName);
-              $tempQueryBuilder = Searchable::booleanSearch($tempQueryBuilder, $columns, $searchQuery, $indexedColumns);
-              $tempQueryBuilder = $tempQueryBuilder -> addSelect(\DB::raw("'$pathPart' as `pathPart`")) -> where('visibility', 1);
+              $tempQueryBuilder = Searchable::booleanSearch($tempQueryBuilder, $columns, $searchQuery, $indexedColumns) -> where('visibility', 1);
 
               if($primaryQueryBuilder === null) $primaryQueryBuilder = $tempQueryBuilder;
 

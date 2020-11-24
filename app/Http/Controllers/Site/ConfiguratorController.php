@@ -38,7 +38,7 @@ class ConfiguratorController extends Controllers\Controller
       {
         $configurationParameterValue = $parameters['configuration'];
 
-        $templateName = base_path() . '/resources/views/contents.site.configurator.document.blade.php';
+        $templateName = base_path() . '/resources/views/contents/site/configurator/document.blade.php';
 
         if(file_exists($templateName))
         {

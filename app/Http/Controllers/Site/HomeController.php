@@ -121,11 +121,11 @@ class HomeController extends Controllers\Controller
           });
        }
 
-       $tablesData -> each(function($item) use (&$discountedProductsQuery, &$latestProductsQuery){
+       $columnsToSelect = ['id', 'timestamp', 'price', 'discount', 'title', 'mainImage', 'pathPart'];
+
+       $tablesData -> each(function($item) use (&$discountedProductsQuery, &$latestProductsQuery, $columnsToSelect){
 
            $pathPartToAssign = \Str::camel($item -> name);
-
-           $columnsToSelect = "`id`,`timestamp`,`price`,`discount`,`title`,`mainImage`,'{$pathPartToAssign}' as `pathPart`";
 
            $discountedProductsTempQuery = \DB::table($item -> name) -> selectRaw($columnsToSelect) -> where('visibility', 1) -> where('discount', '!=', 0);
 

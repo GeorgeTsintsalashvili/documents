@@ -19,7 +19,6 @@ class VideoCardController extends Controllers\Controller
 
       $numOfProductsToView = 9;
       $supportedOrders = [1, 2, 3, 4, 5, 6];
-      $viewSupportedValues = [9, 12, 15, 18, 21, 24, 27, 30];
       $priceRange = BaseModel::getPriceRange(VideoCard::class);
 
       $parameters = $request -> all(); // user input
@@ -42,7 +41,7 @@ class VideoCardController extends Controllers\Controller
         $numOfProductsToView = abs((int) $parameters['numOfProductsToShow']);
         $productsOrder = abs((int) $parameters['order']);
 
-        if(in_array($numOfProductsToView, $viewSupportedValues))
+        if($numOfProductsToView && $numOfProductsToView % 3 == 0 && $numOfProductsToView <= 30)
         {
           $priceFrom = abs((int) $parameters['price-from']);
           $priceTo = abs((int) $parameters['price-to']);

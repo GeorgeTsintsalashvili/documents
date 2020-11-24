@@ -19,7 +19,6 @@ class MemoryModuleController extends Controllers\Controller
 
       $numOfProductsToView = 12;
       $supportedOrders = [1, 2, 3, 4, 5, 6, 7, 8];
-      $viewSupportedValues = [6, 9, 12, 15, 18, 21, 24, 27, 30];
       $priceRange = BaseModel::getPriceRange(MemoryModule::class);
 
       $parameters = $request -> all(); // user input
@@ -41,7 +40,7 @@ class MemoryModuleController extends Controllers\Controller
         $numOfProductsToView = abs((int) $parameters['numOfProductsToShow']);
         $productsOrder = abs((int) $parameters['order']);
 
-        if(in_array($numOfProductsToView, $viewSupportedValues))
+        if($numOfProductsToView && $numOfProductsToView % 3 == 0 && $numOfProductsToView <= 30)
         {
           $priceFrom = abs((int) $parameters['price-from']);
           $priceTo = abs((int) $parameters['price-to']);

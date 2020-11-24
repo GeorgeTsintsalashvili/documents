@@ -21,8 +21,6 @@ class ProductController extends Controllers\Controller
       $data['productsExist'] = false;
 
       $supportedOrders = [0, 1, 2, 3, 4];
-      $viewSupportedValues = [9, 12, 15, 18, 21, 24, 27, 30];
-
       $searchTextMaximumLength = 100;
       $categoryIdMaxLength = 15;
 
@@ -91,7 +89,7 @@ class ProductController extends Controllers\Controller
                 $productsOrder = abs((int) $parameters['order']);
                 $numOfProductsToView = abs((int) $parameters['numOfProductsToShow']);
 
-                if(in_array($numOfProductsToView, $viewSupportedValues))
+                if($numOfProductsToView && $numOfProductsToView % 3 == 0 && $numOfProductsToView <= 30)
                 {
                   $numOfProductsToView = $numOfProductsToView;
 

@@ -127,13 +127,13 @@ class HomeController extends Controllers\Controller
 
            $pathPartToAssign = \Str::camel($item -> name);
 
-           $discountedProductsTempQuery = \DB::table($item -> name) -> selectRaw($columnsToSelect) -> where('visibility', 1) -> where('discount', '!=', 0);
+           $discountedProductsTempQuery = \DB::table($item -> name) -> select($columnsToSelect) -> where('visibility', 1) -> where('discount', '!=', 0);
 
            if(!$discountedProductsQuery) $discountedProductsQuery = $discountedProductsTempQuery;
 
            else $discountedProductsQuery -> union($discountedProductsTempQuery);
 
-           $latestProductsTempQuery = \DB::table($item -> name) -> selectRaw($columnsToSelect) -> where('visibility', '=', 1);
+           $latestProductsTempQuery = \DB::table($item -> name) -> select($columnsToSelect) -> where('visibility', '=', 1);
 
            if(!$latestProductsQuery) $latestProductsQuery = $latestProductsTempQuery;
 

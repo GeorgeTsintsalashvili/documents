@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 
 use Illuminate\Support\Facades\View;
 use \App\Helpers\Paginator;
+use App\Traits\Searchable;
 
 use \App\Models\Site\BaseModel;
 use \App\Models\Site\Product;
@@ -50,140 +51,117 @@ class ProductController extends Controllers\Controller
         $data['productMaxPrice'] = max($priceValues);
 
         $tablesData = \DB::table('tables') -> get();
+        $columns = ['price', 'discount', 'id', 'title', 'mainImage'];
+        $indexedColumns = ['title', 'description'];
 
-        $searchQuery = str_replace(['+', '-', '<', '>', '@', '(', ')', '~', '*', '`', '\'', '"'], '', $parameters['query']);
-        $searchQuery = trim($searchQuery);
-        $categoryId = trim($parameters['category-id']);
+        $searchQuery = $parameters['query'];
+        $categoryId = $parameters['category-id'];
 
-        $searchQueryLengthIsValid = strlen($searchQuery) != 0;
-        $categoryIdLengthIsValid = strlen($categoryId) != 0;
+        $numberOfTables = $tablesData -> count();
 
-        if($searchQueryLengthIsValid && $categoryIdLengthIsValid)
+        if($numberOfTables != 0)
         {
-          $numberOfTables = $tablesData -> count();
+          $maximumLengthOfCategoryIdParam = ($categoryIdMaxLength * $numberOfTables) + $numberOfTables - 1;
 
-          if($numberOfTables != 0)
+          $categoryId = substr($parameters['category-id'], 0, $maximumLengthOfCategoryIdParam);
+          $categoryIdParts = explode(':', $categoryId);
+          $tablesIdentifiers = [];
+
+          $tablesData -> each(function($table) use (&$tablesIdentifiers){
+
+              $tablesIdentifiers[] = $table -> alias;
+          });
+
+          if(array_intersect($categoryIdParts, $tablesIdentifiers) == $categoryIdParts)
           {
-            $maximumLengthOfCategoryIdParam = ($categoryIdMaxLength * $numberOfTables) + $numberOfTables - 1;
+            $priceFrom = abs((int) $parameters['price-from']);
+            $priceTo = abs((int) $parameters['price-to']);
+            $currentPage = abs((int) $parameters['active-page']);
 
-            $categoryId = substr($parameters['category-id'], 0, $maximumLengthOfCategoryIdParam);
-            $categoryIdParts = explode(':', $categoryId);
-            $tablesIdentifiers = [];
+            $minPriceIsInAllowedRange = $priceFrom >= $data['productMinPrice'] && $priceFrom <= $data['productMaxPrice'];
+            $maxPriceIsInAllowedRange = $priceTo <= $data['productMaxPrice'] && $priceTo >= $data['productMinPrice'];
 
-            $tablesData -> each(function($table) use (&$tablesIdentifiers){
-
-                $tablesIdentifiers[] = $table -> alias;
-            });
-
-            if(array_intersect($categoryIdParts, $tablesIdentifiers) == $categoryIdParts)
+            if($minPriceIsInAllowedRange && $maxPriceIsInAllowedRange && $currentPage)
             {
-              $priceFrom = abs((int) $parameters['price-from']);
-              $priceTo = abs((int) $parameters['price-to']);
-              $currentPage = abs((int) $parameters['active-page']);
+              $productsOrder = abs((int) $parameters['order']);
+              $numOfProductsToView = abs((int) $parameters['numOfProductsToShow']);
 
-              $minPriceIsInAllowedRange = $priceFrom >= $data['productMinPrice'] && $priceFrom <= $data['productMaxPrice'];
-              $maxPriceIsInAllowedRange = $priceTo <= $data['productMaxPrice'] && $priceTo >= $data['productMinPrice'];
-
-              if($minPriceIsInAllowedRange && $maxPriceIsInAllowedRange && $currentPage != 0)
+              if($numOfProductsToView && $numOfProductsToView % 3 == 0 && $numOfProductsToView <= 30)
               {
-                $productsOrder = abs((int) $parameters['order']);
-                $numOfProductsToView = abs((int) $parameters['numOfProductsToShow']);
+                $numOfProductsToView = $numOfProductsToView;
 
-                if($numOfProductsToView && $numOfProductsToView % 3 == 0 && $numOfProductsToView <= 30)
+                $conditions = \DB::table('conditions') -> get();
+                $conditionExists = $conditions -> count() != 0;
+
+                $stockTypes = \DB::table('stock_types') -> get();
+                $stockTypeExists = $stockTypes -> count() != 0;
+
+                if($conditionExists && $stockTypeExists)
                 {
-                  $numOfProductsToView = $numOfProductsToView;
+                  $conditionsParts = explode(':', $parameters['condition']);
+                  $stockTypesParts = explode(':', $parameters['stock-type']);
 
-                  $conditions = \DB::table('conditions') -> get();
-                  $conditionExists = $conditions -> count() != 0;
+                  $primaryQueryBuilder = null;
+                  $totalNumOfProducts = 0;
+                  $stockTypeIdentifiers = $conditionIdentifiers = [];
 
-                  $stockTypes = \DB::table('stock_types') -> get();
-                  $stockTypeExists = $stockTypes -> count() != 0;
+                  foreach($stockTypes as $value) $stockTypeIdentifiers[] = $value -> id;
 
-                  if($conditionExists && $stockTypeExists)
+                  foreach($conditions as $value) $conditionIdentifiers[] = $value -> id;
+
+                  foreach($categoryIdParts as $categoryIdentifier)
                   {
-                    $conditionsParts = explode(':', $parameters['condition']);
-                    $stockTypesParts = explode(':', $parameters['stock-type']);
+                    $categoryTableData = $tablesData -> where('alias', $categoryIdentifier) -> first();
 
-                    $searchQuery = preg_replace('/\s{2,}/', ' ', $searchQuery);
-                    $searchQueryParts = explode(' ', $searchQuery);
-                    $validCharactersForSearch = [];
+                    $tableName = $categoryTableData -> name;
+                    $pathPart = \Str::camel($tableName);
 
-                    foreach($searchQueryParts as $searchQueryPart)
-                    {
-                      $searchQueryPart = trim($searchQueryPart);
+                    $tempQueryBuilder = \DB::table($tableName);
+                    $tempQueryBuilder = Searchable::booleanSearch($tempQueryBuilder, $columns, $searchQuery, $indexedColumns);
+                    $tempQueryBuilder = $tempQueryBuilder -> addSelect(\DB::raw("'$pathPart' as `pathPart`")) -> where('visibility', 1);
 
-                      if(strlen($searchQueryPart) != 0)
+                    if(array_intersect($conditionsParts, $conditionIdentifiers) == $conditionsParts) $tempQueryBuilder = $tempQueryBuilder -> whereIn('conditionId', $conditionsParts);
 
-                      $validCharactersForSearch[] = "{$searchQueryPart}*";
-                    }
+                    if(array_intersect($stockTypesParts, $stockTypeIdentifiers) == $stockTypesParts) $tempQueryBuilder = $tempQueryBuilder -> whereIn('stockTypeId', $stockTypesParts);
 
-                    $filteredSearchQuery = implode(' ', $validCharactersForSearch);
-                    $searchCommand = "MATCH(`title`,`description`) AGAINST(? IN BOOLEAN MODE)";
+                    if(is_null($primaryQueryBuilder)) $primaryQueryBuilder = $tempQueryBuilder;
 
-                    $sqlQuery = null;
-                    $totalNumOfProducts = 0;
-                    $stockTypeIdentifiers = $conditionIdentifiers = [];
+                    else $primaryQueryBuilder -> union($tempQueryBuilder);
 
-                    foreach($stockTypes as $value) $stockTypeIdentifiers[] = $value -> id;
+                    $totalNumOfProducts += $tempQueryBuilder -> count();
+                  }
 
-                    foreach($conditions as $value) $conditionIdentifiers[] = $value -> id;
+                  if(in_array($productsOrder, $supportedOrders))
+                  {
+                    $orderNumber = !($productsOrder % 2);
+                    $orderColumn = 'relevance';
 
-                    foreach($categoryIdParts as $categoryIdentifier)
-                    {
-                      $categoryTableData = $tablesData -> where('alias', $categoryIdentifier) -> first();
+                    if($productsOrder == 1 || $productsOrder == 2) $orderColumn = 'price';
 
-                      $tableName = $categoryTableData -> name;
-                      $pathPart = \Str::camel($tableName);
+                    else if($productsOrder == 3 || $productsOrder == 4) $orderColumn = 'timestamp';
 
-                      $columns = "`price`,`discount`,`id`,`title`,`mainImage`,'{$pathPart}' AS `pathPart`,{$searchCommand} AS `relevance`";
+                    $order = $orderColumn == 'relevance' ? 'desc' : ($orderNumber == 0 ? 'desc' : 'asc');
 
-                      $tempSqlQuery = \DB::table($tableName) -> selectRaw($columns, [$filteredSearchQuery])
-                                                             -> whereRaw($searchCommand, [$filteredSearchQuery])
-                                                             -> where('visibility', 1)
-                                                             -> where('price', '<=', $priceTo)
-                                                             -> where('price', '>=', $priceFrom);
+                    $primaryQueryBuilder = $primaryQueryBuilder -> orderBy($orderColumn, $order);
+                  }
 
-                      if(array_intersect($conditionsParts, $conditionIdentifiers) == $conditionsParts) $tempSqlQuery = $tempSqlQuery -> whereIn('conditionId', $conditionsParts);
+                  if($totalNumOfProducts != 0)
+                  {
+                    $paginator = \Paginator::build($totalNumOfProducts, 3, $numOfProductsToView, $currentPage, 2, 0);
 
-                      if(array_intersect($stockTypesParts, $stockTypeIdentifiers) == $stockTypesParts) $tempSqlQuery = $tempSqlQuery -> whereIn('stockTypeId', $stockTypesParts);
+                    $data['pages'] = $paginator -> pages;
+                    $data['maxPage'] = $paginator -> maxPage;
+                    $data['currentPage'] = $currentPage;
 
-                      if(is_null($sqlQuery)) $sqlQuery = $tempSqlQuery;
+                    $data['products'] = $primaryQueryBuilder -> skip(($currentPage - 1) * $numOfProductsToView) -> take($numOfProductsToView) -> get();
+                    $data['productsExist'] = true;
 
-                      else $sqlQuery -> union($tempSqlQuery);
+                    $data['products'] -> map(function($product){
 
-                      $totalNumOfProducts += $tempSqlQuery -> count();
-                    }
+                        $product -> newPrice = $product -> price - $product -> discount;
+                    });
 
-                    if(in_array($productsOrder, $supportedOrders))
-                    {
-                      $orderNumber = !($productsOrder % 2);
-                      $orderColumn = 'relevance';
-
-                      if($productsOrder == 1 || $productsOrder == 2) $orderColumn = 'price';
-
-                      else if($productsOrder == 3 || $productsOrder == 4) $orderColumn = 'timestamp';
-
-                      $sqlQuery = $sqlQuery -> orderBy($orderColumn, $orderNumber == 0 ? 'desc' : 'asc');
-                    }
-
-                    if($totalNumOfProducts != 0)
-                    {
-                      $paginator = \Paginator::build($totalNumOfProducts, 3, $numOfProductsToView, $currentPage, 2, 0);
-
-                      $data['pages'] = $paginator -> pages;
-                      $data['maxPage'] = $paginator -> maxPage;
-                      $data['currentPage'] = $currentPage;
-
-                      $data['products'] = $sqlQuery -> skip(($currentPage - 1) * $numOfProductsToView) -> take($numOfProductsToView) -> get();
-                      $data['productsExist'] = true;
-
-                      $data['products'] -> map(function($product){
-
-                         $product -> newPrice = $product -> price - $product -> discount;
-                      });
-
-                      $data['products'] = $data['products'] -> chunk(3);
-                    }
+                    $data['products'] = $data['products'] -> chunk(3);
                   }
                 }
               }
@@ -197,7 +175,7 @@ class ProductController extends Controllers\Controller
 
     public function getLiveSearchResults(Request $request)
     {
-      $resultsToView = 10;
+      $resultsToView = 20;
       $data['products'] = null;
       $data['productsExist'] = false;
 
@@ -208,94 +186,69 @@ class ProductController extends Controllers\Controller
 
       if(!$validator -> fails())
       {
+        $searchQuery = $parameters['query'];
+        $categoryId = $parameters['category-id'];
+
         $tablesData = \DB::table('tables') -> get();
+        $columns = ['price', 'discount', 'id', 'title', 'mainImage'];
+        $indexedColumns = ['title', 'description'];
 
-        $searchQuery = trim($parameters['query']);
-        $categoryId = trim($parameters['category-id']);
-
-        $searchQuery = str_replace(['+', '-', '<', '>', '@', '(', ')', '~', '*', '`', '\'', '"'], '', $searchQuery);
-        $searchQuery = trim($searchQuery);
-
-        if(strlen($searchQuery) != 0 && !$tablesData -> isEmpty())
+        if(!$tablesData -> isEmpty())
         {
           $tableDataByCategory = \DB::table('tables') -> where('alias', $categoryId) -> first();
           $categoryExists = !is_null($tableDataByCategory);
-
-          $searchQuery = preg_replace('/\s{2,}/', ' ', $searchQuery);
-          $searchQueryParts = explode(' ', $searchQuery);
-          $validCharactersForSearch = [];
-
-          foreach($searchQueryParts as $searchQueryPart)
-          {
-            $searchQueryPart = trim($searchQueryPart);
-
-            if(strlen($searchQueryPart) != 0)
-
-            $validCharactersForSearch[] = "{$searchQueryPart}*";
-          }
-
-          $filteredSearchQuery = implode(' ', $validCharactersForSearch);
-          $searchCommand = "MATCH(`title`,`description`) AGAINST(? IN BOOLEAN MODE)";
 
           if($categoryExists)
           {
              $tableName = $tableDataByCategory -> name;
              $pathPart = \Str::camel($tableName);
 
-             $columns = "`price`,`discount`,`id`,`title`,`mainImage`,'{$pathPart}' AS `pathPart`,{$searchCommand} AS `relevance`";
+             $queryBuilder = \DB::table($tableName);
+             $queryBuilder = Searchable::booleanSearch($queryBuilder, $columns, $searchQuery, $indexedColumns);
+             $queryBuilder = $queryBuilder -> where('visibility', 1) -> orderBy('relevance', 'desc') -> take($resultsToView);
 
-             $sqlQuery = \DB::table($tableName) -> selectRaw($columns, [$filteredSearchQuery])
-                                                -> whereRaw($searchCommand, [$filteredSearchQuery])
-                                                -> where('visibility', 1)
-                                                -> orderBy('relevance', 'desc')
-                                                -> take($resultsToView);
-
-             if($sqlQuery -> count() != 0)
+             if($queryBuilder -> count() != 0)
              {
                 $data['productsExist'] = true;
+                $data['products'] = $queryBuilder -> get();
 
-                $data['products'] = $sqlQuery -> get();
-
-                $data['products'] -> map(function($product){
+                $data['products'] -> map(function($product) use ($pathPart){
 
                     $product -> price = $product -> price - $product -> discount;
+                    $product -> pathPart = $pathPart;
                 });
              }
           }
 
           else
           {
-             $primarySqlQuery = null;
+            $primaryQueryBuilder = null;
 
-             foreach($tablesData as $table)
-             {
-                 $tableName = $table -> name;
+            foreach($tablesData as $table)
+            {
+              $tableName = $table -> name;
+              $pathPart = \Str::camel($tableName);
 
-                 $pathPart = \Str::camel($tableName);
+              $tempQueryBuilder = \DB::table($tableName);
+              $tempQueryBuilder = Searchable::booleanSearch($tempQueryBuilder, $columns, $searchQuery, $indexedColumns);
+              $tempQueryBuilder = $tempQueryBuilder -> addSelect(\DB::raw("'$pathPart' as `pathPart`")) -> where('visibility', 1);
 
-                 $columns = "`price`,`discount`,`id`,`title`,`mainImage`,'{$pathPart}' AS `pathPart`,$searchCommand AS `relevance`";
+              if($primaryQueryBuilder === null) $primaryQueryBuilder = $tempQueryBuilder;
 
-                 $tempSqlQuery = \DB::table($tableName) -> selectRaw($columns, [$filteredSearchQuery])
-                                                        -> whereRaw($searchCommand, [$filteredSearchQuery])
-                                                        -> where('visibility', 1);
+              else $primaryQueryBuilder -> union($tempQueryBuilder);
+            }
 
-                 if(is_null($primarySqlQuery)) $primarySqlQuery = $tempSqlQuery;
+            if(!is_null($primaryQueryBuilder) && $primaryQueryBuilder -> count())
+            {
+              $data['productsExist'] = true;
+              $data['products'] = $primaryQueryBuilder -> orderBy('relevance', 'desc') -> take($resultsToView) -> get();
 
-                 else $primarySqlQuery -> union($tempSqlQuery);
-              }
+              $data['products'] -> map(function($product){
 
-              if(!is_null($primarySqlQuery) && $primarySqlQuery -> count() != 0)
-              {
-                $data['productsExist'] = true;
-
-                $data['products'] = $primarySqlQuery -> orderBy('relevance', 'desc') -> take($resultsToView) -> get();
-
-                $data['products'] -> map(function($product){
-
-                    $product -> price = $product -> price - $product -> discount;
-                });
-              }
-           }
+                  $product -> price = $product -> price - $product -> discount;
+              });
+            }
+          }
         }
       }
 
@@ -349,156 +302,128 @@ class ProductController extends Controllers\Controller
 
       if(!$validator -> fails())
       {
+        $data['paramsAreValid'] = true;
+
         $parameters['query'] = trim($parameters['query']);
         $parameters['categoryId'] = trim($parameters['categoryId']);
 
-        if(strlen($parameters['query']) != 0 && strlen($parameters['categoryId']) != 0)
+        $tablesData = \DB::table('tables') -> get();
+        $columns = ['price', 'discount', 'id', 'title', 'mainImage'];
+        $indexedColumns = ['title', 'description'];
+
+        if(!$tablesData -> isEmpty())
         {
-          $data['paramsAreValid'] = true;
-
-          $tablesData = \DB::table('tables') -> get();
-
-          $searchQuery = str_replace(['+', '-', '<', '>', '@', '(', ')', '~', '*', '`', '\'', '"'], '', $parameters['query']);
-          $searchQuery = trim($searchQuery);
-          $searchQuery = substr($searchQuery, 0, $searchTextMaximumLength);
+          $searchQuery = $parameters['query'];
           $categoryId = substr($parameters['categoryId'], 0, $categoryIdMaximumLength);
-          $searchQueryLengthIsValid = strlen($searchQuery) != 0;
+
+          $tableDataByCategory = \DB::table('tables') -> where('alias', $categoryId) -> first();
+          $categoryExists = !is_null($tableDataByCategory);
 
           $data['search-query'] = htmlentities($searchQuery, ENT_QUOTES, 'UTF-8');
-          $data['category-id'] = htmlentities($categoryId, ENT_QUOTES, 'UTF-8');
 
-          if(!$tablesData -> isEmpty() != 0 && $searchQueryLengthIsValid)
+          if($categoryExists)
           {
-            $searchQuery = preg_replace('/\s{2,}/', ' ', $searchQuery);
+            $tableName = $tableDataByCategory -> name;
+            $pathPart = \Str::camel($tableName);
 
-            $searchQueryParts = explode(' ', $searchQuery);
+            $queryBuilder = \DB::table($tableName);
+            $queryBuilder = Searchable::booleanSearch($queryBuilder, $columns, $searchQuery, $indexedColumns);
+            $queryBuilder = $queryBuilder -> where('visibility', 1) -> orderBy('relevance', 'desc') -> take($numOfProductsToView);
 
-            $validCharactersForSearch = [];
+            $data['products'] = $queryBuilder -> get();
 
-            foreach($searchQueryParts as $searchQueryPart)
+            $totalNumOfProducts = $queryBuilder -> count();
+            $paginator = \Paginator::build($totalNumOfProducts, 3, $numOfProductsToView, $data['active'], 2, 0);
+
+            $data['pages'] = $paginator -> pages;
+            $data['maxPage'] = $paginator -> maxPage;
+            $data['currentPage'] = $data['active'];
+            $data['productsExist'] = $totalNumOfProducts != 0;
+
+            if($data['productsExist'])
             {
-              $searchQueryPart = trim($searchQueryPart);
+              $data['categories'][] = ['categoryTitle' => $tableDataByCategory -> title,
+                                       'categoryId' => $categoryId,
+                                       'quantity' => $totalNumOfProducts];
 
-              if(strlen($searchQueryPart) != 0)
+              $data['categoryIdentifiers'] = $categoryId;
 
-              $validCharactersForSearch[] = "{$searchQueryPart}*";
+              foreach($data['products'] as $key => $value)
+              {
+                $data['products'][$key] -> newPrice = $value -> price - $value -> discount;
+                $data['products'][$key] -> pathPart = $pathPart;
+              }
+
+              foreach($data['stockTypes'] as $key => $value)
+              {
+                $stockTypesCounterQueryBuilder = \DB::table($tableName);
+                $stockTypesCounterQueryBuilder = Searchable::booleanSearch($stockTypesCounterQueryBuilder, ['id'], $searchQuery, $indexedColumns);
+
+                $data['stockTypes'][$key] -> quantity += $stockTypesCounterQueryBuilder -> where('visibility', 1) -> where('stockTypeId', $value -> id) -> count();
+              }
+
+              foreach($data['conditions'] as $key => $value)
+              {
+                $conditionsCounterQueryBuilder = \DB::table($tableName);
+                $conditionsCounterQueryBuilder = Searchable::booleanSearch($conditionsCounterQueryBuilder, ['id'], $searchQuery, $indexedColumns);
+
+                $data['conditions'][$key] -> quantity += $conditionsCounterQueryBuilder -> where('visibility', 1) -> where('conditionId', $value -> id) -> count();
+              }
+
+              $data['products'] = $data['products'] -> chunk(3);
             }
+          }
 
-            $tableDataByCategory = \DB::table('tables') -> where('alias', $categoryId) -> first();
-            $categoryExists = !is_null($tableDataByCategory);
+          else
+          {
+            $primaryQueryBuilder = null;
+            $totalNumOfProducts = 0;
 
-            $filteredSearchQuery = implode(' ', $validCharactersForSearch);
-            $searchCommand = "MATCH(`title`,`description`) AGAINST(? IN BOOLEAN MODE)";
-
-            if($categoryExists)
+            foreach($tablesData as $table)
             {
-              $tableName = $tableDataByCategory -> name;
+              $tableName = $table -> name;
               $pathPart = \Str::camel($tableName);
+              $categoryId = $table -> alias;
 
-              $columns = "`price`,`discount`,`id`,`title`,`mainImage`,'{$pathPart}' AS `pathPart`,{$searchCommand} AS `relevance`";
+              $tempQueryBuilder = \DB::table($tableName);
+              $tempQueryBuilder = Searchable::booleanSearch($tempQueryBuilder, $columns, $searchQuery, $indexedColumns);
+              $tempQueryBuilder = $tempQueryBuilder -> addSelect(\DB::raw("'$pathPart' as `pathPart`")) -> where('visibility', 1);
 
-              $sqlQuery = \DB::table($tableName) -> selectRaw($columns, [$filteredSearchQuery])
-                                                 -> whereRaw($searchCommand, [$filteredSearchQuery])
-                                                 -> where('visibility', 1)
-                                                 -> orderBy('relevance', 'desc')
-                                                 -> take($numOfProductsToView);
+              if($primaryQueryBuilder === null) $primaryQueryBuilder = $tempQueryBuilder;
 
-              $data['products'] = $sqlQuery -> get();
+              else $primaryQueryBuilder -> union($tempQueryBuilder);
 
-              $totalNumOfProducts = $sqlQuery -> count();
-              $paginator = \Paginator::build($totalNumOfProducts, 3, $numOfProductsToView, $data['active'], 2, 0);
-
-              $data['pages'] = $paginator -> pages;
-              $data['maxPage'] = $paginator -> maxPage;
-              $data['currentPage'] = $data['active'];
-
-              $data['productsExist'] = $totalNumOfProducts != 0;
-
-              if($data['productsExist'])
+              foreach($data['stockTypes'] as $key => $value)
               {
-                $data['categories'][] = ['categoryTitle' => $tableDataByCategory -> title,
-                                         'categoryId' => $categoryId,
-                                         'quantity' => $totalNumOfProducts];
+                $stockTypesCounterQueryBuilder = \DB::table($tableName);
+                $stockTypesCounterQueryBuilder = Searchable::booleanSearch($stockTypesCounterQueryBuilder, ['id'], $searchQuery, $indexedColumns);
 
-                $data['categoryIdentifiers'] = $categoryId;
+                $data['stockTypes'][$key] -> quantity += $stockTypesCounterQueryBuilder -> where('visibility', 1) -> where('stockTypeId', $value -> id) -> count();
+              }
 
-                foreach($data['products'] as $key => $value)
-                {
-                  $data['products'][$key] -> newPrice = $value -> price - $value -> discount;
-                }
+              foreach($data['conditions'] as $key => $value)
+              {
+                $conditionsCounterQueryBuilder = \DB::table($tableName);
+                $conditionsCounterQueryBuilder = Searchable::booleanSearch($conditionsCounterQueryBuilder, ['id'], $searchQuery, $indexedColumns);
 
-                foreach($data['stockTypes'] as $key => $value)
-                {
-                  $data['stockTypes'][$key] -> quantity = \DB::table($tableName) -> whereRaw($searchCommand, [$filteredSearchQuery])
-                                                                                 -> where('visibility', 1)
-                                                                                 -> where('stockTypeId', $value -> id)
-                                                                                 -> count();
-                }
+                $data['conditions'][$key] -> quantity += $conditionsCounterQueryBuilder -> where('visibility', 1) -> where('conditionId', $value -> id) -> count();
+              }
 
-                foreach($data['conditions'] as $key => $value)
-                {
-                  $data['conditions'][$key] -> quantity = \DB::table($tableName) -> whereRaw($searchCommand, [$filteredSearchQuery])
-                                                                                 -> where('visibility', 1)
-                                                                                 -> where('conditionId', $value -> id)
-                                                                                 -> count();
-                }
+              $numberOfRows = $tempQueryBuilder -> count();
 
-                $data['products'] = $data['products'] -> chunk(3);
+              if($numberOfRows != 0)
+              {
+                $data['categories'][] = ['categoryTitle' => $table -> title, 'categoryId' => $categoryId, 'quantity' => $numberOfRows];
+
+                $totalNumOfProducts += $numberOfRows;
+
+                $data['categoryIdentifiers'] .= "{$categoryId}:";
               }
             }
 
-            else
+            if($primaryQueryBuilder !== null)
             {
-              $sqlQuery = null;
-              $totalNumOfProducts = 0;
-
-              foreach($tablesData as $table)
-              {
-                $tableName = $table -> name;
-                $pathPart = \Str::camel($tableName);
-                $categoryId = $table -> alias;
-
-                $columns = "`title`,`mainImage`,`price`,`id`,`discount`,'{$pathPart}' AS `pathPart`,{$searchCommand} AS `relevance`";
-
-                $tempSqlQuery = \DB::table($tableName) -> selectRaw($columns, [$filteredSearchQuery])
-                                                       -> whereRaw($searchCommand, [$filteredSearchQuery])
-                                                       -> where('visibility', 1)
-                                                       -> orderBy('relevance', 'desc')
-                                                       -> take($numOfProductsToView);
-
-                if(is_null($sqlQuery)) $sqlQuery = $tempSqlQuery;
-
-                else $sqlQuery -> union($tempSqlQuery);
-
-                foreach($data['stockTypes'] as $key => $value)
-                {
-                  $data['stockTypes'][$key] -> quantity += \DB::table($tableName) -> whereRaw($searchCommand, [$filteredSearchQuery])
-                                                                                  -> where('visibility', 1)
-                                                                                  -> where('stockTypeId', $value -> id)
-                                                                                  -> count();
-                }
-
-                foreach($data['conditions'] as $key => $value)
-                {
-                  $data['conditions'][$key] -> quantity += \DB::table($tableName) -> whereRaw($searchCommand, [$filteredSearchQuery])
-                                                                                  -> where('visibility', 1)
-                                                                                  -> where('conditionId', $value -> id)
-                                                                                  -> count();
-                }
-
-                $numberOfRows = $tempSqlQuery -> count();
-
-                if($numberOfRows != 0)
-                {
-                  $data['categories'][] = ['categoryTitle' => $table -> title, 'categoryId' => $categoryId, 'quantity' => $numberOfRows];
-
-                  $totalNumOfProducts += $numberOfRows;
-
-                  $data['categoryIdentifiers'] .= "{$categoryId}:";
-                }
-              }
-
-              $sqlQuery = $sqlQuery -> orderBy('relevance', 'desc') -> take($numOfProductsToView);
+              $primaryQueryBuilder = $primaryQueryBuilder -> orderBy('relevance', 'desc') -> take($numOfProductsToView);
 
               $data['categoryIdentifiers'] = rtrim($data['categoryIdentifiers'], ':');
               $data['numOfProducts'] = $totalNumOfProducts;
@@ -510,7 +435,7 @@ class ProductController extends Controllers\Controller
               $data['pages'] = $paginator -> pages;
               $data['maxPage'] = $paginator -> maxPage;
               $data['currentPage'] = $data['active'];
-              $data['products'] = $sqlQuery -> get();
+              $data['products'] = $primaryQueryBuilder -> get();
 
               if($data['productsExist'])
               {

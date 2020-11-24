@@ -118,14 +118,10 @@ class NetworkDeviceController extends Controllers\Controller
     public function index()
     {
       $functionArguments = func_get_args();
-      $categoryId = count($functionArguments) != 0 ? $functionArguments[0] : 0;
+      $categoryId = count($functionArguments) ? $functionArguments[0] : 0;
 
+      $generalData = BaseModel::getGeneralData();
       $numOfProductsToView = 9;
-      $adjacent = 3;
-      $currentPage = 1;
-      $leftBoundary = 2;
-      $rightBoundary = 0;
-      $chunkSize = 3;
 
       $data['categoryId'] = $categoryId;
       $data['networkDevicesExist'] = false;
@@ -186,18 +182,14 @@ class NetworkDeviceController extends Controllers\Controller
                                                                                                          -> count();
 
             $totalNumOfProducts = $query -> count();
-            $paginator = \Paginator::build($totalNumOfProducts, 3, $numOfProductsToView, $currentPage, 2, 0);
+            $paginator = \Paginator::build($totalNumOfProducts, 3, $numOfProductsToView, 1, 2, 0);
 
             $data['pages'] = $paginator -> pages;
             $data['maxPage'] = $paginator -> maxPage;
-            $data['currentPage'] = $currentPage;
-
-            $data['networkDevices'] = $data['networkDevices'] -> chunk($chunkSize);
+            $data['networkDevices'] = $data['networkDevices'] -> chunk(3);
           }
         }
       }
-
-      $generalData = BaseModel::getGeneralData();
 
       BaseModel::collectStatisticalData(NetworkDevice::class);
 

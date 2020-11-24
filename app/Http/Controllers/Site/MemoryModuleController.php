@@ -163,13 +163,7 @@ class MemoryModuleController extends Controllers\Controller
     public function index()
     {
       $generalData = BaseModel::getGeneralData();
-
       $numOfProductsToView = 9;
-      $adjacent = 3;
-      $currentPage = 1;
-      $leftBoundary = 2;
-      $rightBoundary = 0;
-      $chunkSize = 3;
 
       $data['configuration']['productPriceRange'] = BaseModel::getPriceRange(MemoryModule::class);
       $data['configuration']['productPriceRangeExists'] = !is_null($data['configuration']['productPriceRange']);
@@ -278,13 +272,11 @@ class MemoryModuleController extends Controllers\Controller
           }
 
           $totalNumOfProducts = $query -> count();
-          $paginator = \Paginator::build($totalNumOfProducts, 3, $numOfProductsToView, $currentPage, 2, 0);
+          $paginator = \Paginator::build($totalNumOfProducts, 3, $numOfProductsToView, 1, 2, 0);
 
           $data['pages'] = $paginator -> pages;
           $data['maxPage'] = $paginator -> maxPage;
-          $data['currentPage'] = $currentPage;
-
-          $data['memoryModules'] = $data['memoryModules'] -> chunk($chunkSize);
+          $data['memoryModules'] = $data['memoryModules'] -> chunk(3);
         }
       }
 

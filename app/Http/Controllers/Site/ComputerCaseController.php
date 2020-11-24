@@ -121,13 +121,7 @@ class ComputerCaseController extends Controllers\Controller
     public function index()
     {
       $generalData = BaseModel::getGeneralData();
-
       $numOfProductsToView = 6;
-      $adjacent = 3;
-      $currentPage = 1;
-      $leftBoundary = 2;
-      $rightBoundary = 0;
-      $chunkSize = 3;
 
       $data['configuration']['productPriceRange'] = BaseModel::getPriceRange(ComputerCase::class);
       $data['configuration']['productPriceRangeExists'] = !is_null($data['configuration']['productPriceRange']);
@@ -187,13 +181,11 @@ class ComputerCaseController extends Controllers\Controller
 
           foreach($data['cases'] as $key => $value) $data['cases'][$key] -> newPrice = $value -> price - $value -> discount;
 
-          $paginator = \Paginator::build($totalNumOfProducts, 3, $numOfProductsToView, $currentPage, 2, 0);
+          $paginator = \Paginator::build($totalNumOfProducts, 3, $numOfProductsToView, 1, 2, 0);
 
           $data['pages'] = $paginator -> pages;
           $data['maxPage'] = $paginator -> maxPage;
-          $data['currentPage'] = $currentPage;
-
-          $data['cases'] = $data['cases'] -> chunk($chunkSize);
+          $data['cases'] = $data['cases'] -> chunk(3);
         }
       }
 

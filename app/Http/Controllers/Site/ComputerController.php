@@ -203,15 +203,7 @@ class ComputerController extends Controllers\Controller
     public function index()
     {
       $generalData = BaseModel::getGeneralData();
-
-      BaseModel::collectStatisticalData(Computer::class);
-
       $numOfProductsToView = 12;
-      $adjacent = 3;
-      $currentPage = 1;
-      $leftBoundary = 2;
-      $rightBoundary = 0;
-      $chunkSize = 3;
 
       $data['configuration']['productPriceRange'] = BaseModel::getPriceRange(Computer::class);
       $data['configuration']['computerPriceRangeExists'] = !is_null($data['configuration']['productPriceRange']);
@@ -322,11 +314,10 @@ class ComputerController extends Controllers\Controller
                                                                                                 -> count();
 
           $totalNumOfProducts = $query -> count();
-          $paginator = \Paginator::build($totalNumOfProducts, 3, $numOfProductsToView, $currentPage, 2, 0);
+          $paginator = \Paginator::build($totalNumOfProducts, 3, $numOfProductsToView, 1, 2, 0);
 
           $data['pages'] = $paginator -> pages;
           $data['maxPage'] = $paginator -> maxPage;
-          $data['currentPage'] = $currentPage;
 
           foreach($data['computers'] as $key => $value)
           {
@@ -345,9 +336,11 @@ class ComputerController extends Controllers\Controller
             $data['computers'][$key] -> storage = $storage;
           }
 
-          $data['computers'] = $data['computers'] -> chunk($chunkSize);
+          $data['computers'] = $data['computers'] -> chunk(3);
         }
       }
+
+      BaseModel::collectStatisticalData(Computer::class);
 
       return View::make('contents.site.computers.index', ['contentData' => $data,
                                                           'generalData' => $generalData]);

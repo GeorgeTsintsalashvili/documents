@@ -144,13 +144,7 @@ class MotherboardController extends Controllers\Controller
     public function index()
     {
       $generalData = BaseModel::getGeneralData();
-
       $numOfProductsToView = 12;
-      $adjacent = 3;
-      $currentPage = 1;
-      $leftBoundary = 2;
-      $rightBoundary = 0;
-      $chunkSize = 3;
 
       $columns = ['motherboards.id', 'title', 'mainImage', 'discount', 'price', 'socketTitle', 'manufacturerTitle', 'formFactorTitle', 'typeTitle'];
 
@@ -238,18 +232,17 @@ class MotherboardController extends Controllers\Controller
           $data['motherboards'] = $query -> take($numOfProductsToView) -> get();
 
           $totalNumOfProducts = $query -> count();
-          $paginator = \Paginator::build($totalNumOfProducts, 3, $numOfProductsToView, $currentPage, 2, 0);
+          $paginator = \Paginator::build($totalNumOfProducts, 3, $numOfProductsToView, 1, 2, 0);
 
           $data['pages'] = $paginator -> pages;
           $data['maxPage'] = $paginator -> maxPage;
-          $data['currentPage'] = $currentPage;
 
           foreach($data['motherboards'] as $key => $value)
           {
             $data['motherboards'][$key] -> newPrice = $value -> price - $value -> discount;
           }
 
-          $data['motherboards'] = $data['motherboards'] -> chunk($chunkSize);
+          $data['motherboards'] = $data['motherboards'] -> chunk(3);
         }
       }
 

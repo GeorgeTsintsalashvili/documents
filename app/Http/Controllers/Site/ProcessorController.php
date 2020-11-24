@@ -167,13 +167,7 @@ class ProcessorController extends Controllers\Controller
     public function index()
     {
       $generalData = BaseModel::getGeneralData();
-
       $numOfProductsToView = 15;
-      $adjacent = 3;
-      $currentPage = 1;
-      $leftBoundary = 2;
-      $rightBoundary = 0;
-      $chunkSize = 3;
 
       $data['processorsExist'] = false;
       $data['configuration']['productPriceRange'] = BaseModel::getPriceRange(Processor::class);
@@ -294,13 +288,11 @@ class ProcessorController extends Controllers\Controller
 
            $data['processors'][$key] -> newPrice = $value -> price - $value -> discount;
 
-           $paginator = \Paginator::build($totalNumOfProducts, 3, $numOfProductsToView, $currentPage, 2, 0);
+           $paginator = \Paginator::build($totalNumOfProducts, 3, $numOfProductsToView, 1, 2, 0);
 
            $data['pages'] = $paginator -> pages;
            $data['maxPage'] = $paginator -> maxPage;
-           $data['currentPage'] = $currentPage;
-
-           $data['processors'] = $data['processors'] -> chunk($chunkSize);
+           $data['processors'] = $data['processors'] -> chunk(3);
         }
       }
 

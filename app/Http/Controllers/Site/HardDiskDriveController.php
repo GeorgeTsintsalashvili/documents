@@ -139,13 +139,7 @@ class HardDiskDriveController extends Controllers\Controller
     public function index()
     {
       $generalData = BaseModel::getGeneralData();
-
       $numOfProductsToView = 9;
-      $adjacent = 3;
-      $currentPage = 1;
-      $leftBoundary = 2;
-      $rightBoundary = 0;
-      $chunkSize = 3;
 
       $data['configuration']['productPriceRange'] = BaseModel::getPriceRange(HardDiskDrive::class);
       $data['configuration']['numOfProductsToShow'] = $numOfProductsToView;
@@ -232,17 +226,18 @@ class HardDiskDriveController extends Controllers\Controller
                                                                                                          -> count();
           }
 
-          $paginator = \Paginator::build($totalNumOfProducts, 3, $numOfProductsToView, $currentPage, 2, 0);
+          $paginator = \Paginator::build($totalNumOfProducts, 3, $numOfProductsToView, 1, 2, 0);
 
           $data['pages'] = $paginator -> pages;
           $data['maxPage'] = $paginator -> maxPage;
-          $data['currentPage'] = $currentPage;
-
           $data['hardDiskDrives'] = $query -> take($numOfProductsToView) -> get();
 
-          foreach($data['hardDiskDrives'] as $key => $value) $data['hardDiskDrives'][$key] -> newPrice = $value -> price - $value -> discount;
+          foreach($data['hardDiskDrives'] as $key => $value)
+          {
+            $data['hardDiskDrives'][$key] -> newPrice = $value -> price - $value -> discount;
+          }
 
-          $data['hardDiskDrives'] = $data['hardDiskDrives'] -> chunk($chunkSize);
+          $data['hardDiskDrives'] = $data['hardDiskDrives'] -> chunk(3);
         }
       }
 

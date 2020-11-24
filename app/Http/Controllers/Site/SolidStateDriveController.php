@@ -132,14 +132,8 @@ class SolidStateDriveController extends Controllers\Controller
 
     public function index()
     {
-      $generalData = \App\Models\Site\BaseModel::getGeneralData();
-
+      $generalData = BaseModel::getGeneralData();
       $numOfProductsToView = 9;
-      $adjacent = 3;
-      $currentPage = 1;
-      $leftBoundary = 2;
-      $rightBoundary = 0;
-      $chunkSize = 3;
 
       $data['configuration']['productPriceRange'] = BaseModel::getPriceRange(SolidStateDrive::class);
       $data['configuration']['numOfProductsToShow'] = $numOfProductsToView;
@@ -227,13 +221,11 @@ class SolidStateDriveController extends Controllers\Controller
 
           foreach($data['solidStateDrives'] as $key => $value) $data['solidStateDrives'][$key] -> newPrice = $value -> price - $value -> discount;
 
-          $paginator = \Paginator::build($totalNumOfProducts, 3, $numOfProductsToView, $currentPage, 2, 0);
+          $paginator = \Paginator::build($totalNumOfProducts, 3, $numOfProductsToView, 1, 2, 0);
 
           $data['pages'] = $paginator -> pages;
           $data['maxPage'] = $paginator -> maxPage;
-          $data['currentPage'] = $currentPage;
-
-          $data['solidStateDrives'] = $data['solidStateDrives'] -> chunk($chunkSize);
+          $data['solidStateDrives'] = $data['solidStateDrives'] -> chunk(3);
         }
       }
 

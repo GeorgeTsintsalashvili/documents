@@ -118,13 +118,7 @@ class NotebookChargerController extends Controllers\Controller
     public function index()
     {
       $generalData = BaseModel::getGeneralData();
-
       $numOfProductsToView = 9;
-      $adjacent = 3;
-      $currentPage = 1;
-      $leftBoundary = 2;
-      $rightBoundary = 0;
-      $chunkSize = 3;
 
       $data['notebookChargersExist'] = false;
       $data['configuration']['productPriceRange'] = BaseModel::getPriceRange(NotebookCharger::class);
@@ -180,13 +174,11 @@ class NotebookChargerController extends Controllers\Controller
                                                                                                         -> count();
 
           $totalNumOfProducts = $query -> count();
-          $paginator = \Paginator::build($totalNumOfProducts, 3, $numOfProductsToView, $currentPage, 2, 0);
+          $paginator = \Paginator::build($totalNumOfProducts, 3, $numOfProductsToView, 1, 2, 0);
 
           $data['pages'] = $paginator -> pages;
           $data['maxPage'] = $paginator -> maxPage;
-          $data['currentPage'] = $currentPage;
-
-          $data['notebookChargers'] = $data['notebookChargers'] -> chunk($chunkSize);
+          $data['notebookChargers'] = $data['notebookChargers'] -> chunk(3);
         }
       }
 

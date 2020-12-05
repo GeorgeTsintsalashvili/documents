@@ -8,7 +8,7 @@ class Home extends Model
 {
   public function stockType()
   {
-    return $this -> belongsTo(StockType::class, 'stockTypeId');
+    return $this -> belongsTo(StockType::class, 'stockTypeId'); 
   }
 
   public function condition()

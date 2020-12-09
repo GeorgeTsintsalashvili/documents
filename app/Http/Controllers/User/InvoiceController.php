@@ -143,11 +143,6 @@ class InvoiceController extends Controller
 
           $mailer -> CharSet = "UTF-8";
           $mailer -> Host = "localhost"; // mail.itw.ge
-
-    //    $mailer -> SMTPAuth = true;
-   //     $mailer -> Username = "info@itw.ge";
-  //      $mailer -> Password = "Unicef1993$";
- //       $mailer -> SMTPSecure = "ssl";
           $mailer -> Port = 465;
 
           $mailer -> isHTML(true);

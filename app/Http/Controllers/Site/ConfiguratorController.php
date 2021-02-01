@@ -28,317 +28,443 @@ class ConfiguratorController extends Controllers\Controller
       $data['documentHtmlText'] = 'Configuration Is Empty';
       $data['documentName'] = 'itworks';
 
-      // request data validation logic
+      // validation logic
 
       $parameters = $request -> all();
 
-      $validator = \Validator::make($parameters, ['configuration' => 'required']);
+      $validator = \Validator::make($parameters, ['parts' => 'required',
+                                                  'peripherals' => 'required']);
 
       if(!$validator -> fails())
       {
-        $configurationParameterValue = $parameters['configuration'];
+        $configurationParameterValue = $parameters['parts'];
+        $peripheralsParameterValue = $parameters['peripherals'];
 
         $templateName = base_path() . '/resources/views/contents/site/configurator/document.blade.php';
 
         if(file_exists($templateName))
         {
           $configurationParameterValueParts = explode(':', $configurationParameterValue);
+          $peripheralsParameterValueParts = explode(':', $peripheralsParameterValue);
 
-          if(count($configurationParameterValueParts) == 9)
+          if(count($configurationParameterValueParts) == 9 && count($peripheralsParameterValueParts) == 4)
           {
             $memoryPart = $configurationParameterValueParts[0];
-
             $memoryParts = explode('-', $memoryPart);
 
             if(count($memoryParts) == 2)
             {
-              $memories = abs((int) $memoryParts[0]);
-              $memoryId = abs((int) $memoryParts[1]);
+              $stockTypes = \DB::table('stock_types') -> select(['id']) -> where('configuratorPart', '=', 1) -> get();
+              $stockTypesIdentifiers = [];
 
-              if($memories != 0 && $memoryId != 0)
+              foreach($stockTypes as $stockType) $stockTypesIdentifiers[] = $stockType -> id;
+
+              if(count($stockTypesIdentifiers) != 0)
               {
-                $stockTypes = \DB::table('stock_types') -> select(['id']) -> where('configuratorPart', '=', 1) -> get();
-                $stockTypesIdentifiers = [];
+                $processorFields = ['title', 'price', 'discount'];
+                $motherboardFields = ['title', 'price', 'discount', 'ramSlots'];
+                $memoryFields = ['title', 'price', 'discount', 'isCouple'];
+                $optionalPartsfields = ['title', 'price', 'discount'];
 
-                foreach($stockTypes as $stockType) $stockTypesIdentifiers[] = $stockType -> id;
+                // contact information
 
-                if(count($stockTypesIdentifiers) != 0)
+                $email = 'არ არის მითითებული';
+                $phone = 'არ არის მითითებული';
+                $address = 'არ არის მითითებული';
+                $schedule = 'არ არის მითითებული';
+
+                // key logic
+
+                $numberOfPartsSelectedByUser = 0;
+                $assemblyPrice = 0;
+                $overalPrice = 0;
+                $overalOldPrice = 0;
+                $overalOldPriceVisibility = 'none';
+                $memoryUnitsProvidedByUser = 0;
+
+                // parts identifiers
+
+                $processorId = abs((int) $configurationParameterValueParts[1]);
+                $motherboardId = abs((int) $configurationParameterValueParts[2]);
+                $memories = abs((int) $memoryParts[0]);
+                $memoryId = abs((int) $memoryParts[1]);
+                $videoCardId = abs((int) $configurationParameterValueParts[3]);
+                $powerSupplyId = abs((int) $configurationParameterValueParts[4]);
+                $processorCoolerId = abs((int) $configurationParameterValueParts[5]);
+                $caseId = abs((int) $configurationParameterValueParts[6]);
+                $hardDiskDriveId = abs((int) $configurationParameterValueParts[7]);
+                $solidStateDiskDriveId = abs((int) $configurationParameterValueParts[8]);
+
+                // peripherals identifiers
+
+                $monitorId = abs((int) $peripheralsParameterValueParts[0]);
+                $headphoneId = abs((int) $peripheralsParameterValueParts[1]);
+                $keyboardId = abs((int) $peripheralsParameterValueParts[2]);
+                $computerMouseId = abs((int) $peripheralsParameterValueParts[3]);
+
+                // system block parts titles
+
+                $processorTitle = 'არ არის არჩეული';
+                $motherboardTitle = 'არ არის არჩეული';
+                $memoryTitle = 'არ არის არჩეული';
+                $videoCardTitle = 'არ არის არჩეული';
+                $powerSupplyTitle = 'არ არის არჩეული';
+                $processorCoolerTitle = 'არ არის არჩეული';
+                $caseTitle = 'არ არის არჩეული';
+                $hardDiskDriveTitle = 'არ არის არჩეული';
+                $solidStateDriveTitle = 'არ არის არჩეული';
+
+                // peripherals titles
+
+                $monitorTitle = 'არ არის არჩეული';
+                $headphoneTitle = 'არ არის არჩეული';
+                $keyboardTitle = 'არ არის არჩეული';
+                $computerMouseTitle = 'არ არის არჩეული';
+
+                // system block parts new prices
+
+                $processorPrice = 0;
+                $motherboardPrice = 0;
+                $memoryPrice = 0;
+                $videoCardPrice = 0;
+                $powerSupplyPrice = 0;
+                $processorCoolerPrice = 0;
+                $casePrice = 0;
+                $hardDiskDrivePrice = 0;
+                $solidStateDrivePrice = 0;
+
+                // peripherals new prices
+
+                $monitorPrice = 0;
+                $headphonePrice = 0;
+                $keyboardPrice = 0;
+                $computerMousePrice = 0;
+
+                // system block parts old prices
+
+                $processorOldPrice = 0;
+                $motherboardOldPrice = 0;
+                $memoryOldPrice = 0;
+                $videoCardOldPrice = 0;
+                $powerSupplyOldPrice = 0;
+                $processorCoolerOldPrice = 0;
+                $caseOldPrice = 0;
+                $hardDiskDriveOldPrice = 0;
+                $solidStateDriveOldPrice = 0;
+
+                // peripherals old prices
+
+                $monitorOldPrice = 0;
+                $headphoneOldPrice = 0;
+                $keyboardOldPrice = 0;
+                $computerMouseOldPrice = 0;
+
+                // parts discounts visibilities
+
+                $processorDiscountVisibility = 'none';
+                $motherboardDiscountVisibility = 'none';
+                $memoryDiscountVisibility = 'none';
+                $videoCardDiscountVisibility = 'none';
+                $powerSupplyDiscountVisibility = 'none';
+                $processorCoolerDiscountVisibility = 'none';
+                $caseDiscountVisibility = 'none';
+                $hardDiskDriveDiscountVisibility = 'none';
+                $solidStateDriveDiscountVisibility = 'none';
+
+                // peripherals discounts visibilities
+
+                $monitorDiscountVisibility = 'none';
+                $headphoneDiscountVisibility = 'none';
+                $keyboardDiscountVisibility = 'none';
+                $computerMouseDiscountVisibility = 'none';
+
+                // select parts
+
+                $processor = null;
+                $motherboard = null;
+                $memory = null;
+                $videoCard = null;
+                $powerSupply = null;
+                $processorCooler = null;
+                $case = null;
+                $hardDiskDrive = null;
+                $solidStateDrive = null;
+
+                if($processorId) $processor = \DB::table('processors') -> select($processorFields) -> where('id', '=', $processorId) -> where('visibility', 1) -> where('configuratorPart', '=', 1) -> whereIn('stockTypeId', $stockTypesIdentifiers) -> first();
+                if($motherboardId) $motherboard = \DB::table('motherboards') -> select($motherboardFields) -> where('id', '=', $motherboardId) -> where('visibility', 1) -> where('configuratorPart', '=', 1) -> whereIn('stockTypeId', $stockTypesIdentifiers) -> first();
+                if($memoryId) $memory = \DB::table('memory_modules') -> select($memoryFields) -> where('id', '=', $memoryId) -> where('visibility', 1) -> where('configuratorPart', '=', 1) -> whereIn('stockTypeId', $stockTypesIdentifiers) -> first();
+                if($videoCardId) $videoCard = \DB::table('video_cards') -> select($optionalPartsfields) -> where('id', '=', $videoCardId) -> where('visibility', 1) -> where('configuratorPart', '=', 1) -> whereIn('stockTypeId', $stockTypesIdentifiers) -> first();
+                if($powerSupplyId) $powerSupply = \DB::table('power_supplies') -> select($optionalPartsfields) -> where('id', '=', $powerSupplyId) -> where('visibility', 1) -> where('configuratorPart', '=', 1) -> whereIn('stockTypeId', $stockTypesIdentifiers) -> first();
+                if($processorCoolerId) $processorCooler = \DB::table('processor_coolers') -> select($optionalPartsfields) -> where('id', '=', $processorCoolerId) -> where('visibility', 1) -> where('configuratorPart', '=', 1) -> whereIn('stockTypeId', $stockTypesIdentifiers) -> first();
+                if($caseId) $case = \DB::table('computer_cases') -> select($optionalPartsfields) -> where('id', '=', $caseId) -> where('visibility', 1) -> where('configuratorPart', '=', 1) -> whereIn('stockTypeId', $stockTypesIdentifiers) -> first();
+                if($hardDiskDriveId) $hardDiskDrive = \DB::table('hard_disk_drives') -> select($optionalPartsfields) -> where('id', '=', $hardDiskDriveId) -> where('visibility', 1) -> where('configuratorPart', '=', 1) -> whereIn('stockTypeId', $stockTypesIdentifiers) -> first();
+                if($solidStateDiskDriveId) $solidStateDrive = \DB::table('solid_state_drives') -> select($optionalPartsfields) -> where('id', '=', $solidStateDiskDriveId) -> where('visibility', 1) -> where('configuratorPart', '=', 1) -> whereIn('stockTypeId', $stockTypesIdentifiers) -> first();
+
+                // select peripherals
+
+                $monitor = null;
+                $headphone = null;
+                $keyboard = null;
+                $computerMouse = null;
+
+                if($monitorId) $monitor = \DB::table('monitors') -> select($optionalPartsfields) -> where('monitors.id', '=', $monitorId) -> where('visibility', 1) -> whereIn('stockTypeId', $stockTypesIdentifiers) -> first();
+                if($headphoneId) $headphone = \DB::table('accessories') -> select($optionalPartsfields) -> join('accessories_types', 'accessories_types.id', '=', 'accessories.accessoryTypeId') -> where('accessories.id', '=', $headphoneId) -> where('visibility', 1) -> where('typeKey', '=', 'hdphn') -> whereIn('stockTypeId', $stockTypesIdentifiers) -> first();
+                if($keyboardId) $keyboard = \DB::table('accessories') -> select($optionalPartsfields) -> join('accessories_types', 'accessories_types.id', '=', 'accessories.accessoryTypeId') -> where('accessories.id', '=', $keyboardId) -> where('visibility', 1) -> where('typeKey', '=', 'kbrd') -> whereIn('stockTypeId', $stockTypesIdentifiers) -> first();
+                if($computerMouseId) $computerMouse = \DB::table('accessories') -> select($optionalPartsfields) -> join('accessories_types', 'accessories_types.id', '=', 'accessories.accessoryTypeId') -> where('accessories.id', '=', $computerMouseId) -> where('visibility', 1) -> where('typeKey', '=', 'ms') -> whereIn('stockTypeId', $stockTypesIdentifiers) -> first();
+
+                // sum key data
+
+                $overalPrice = 0;
+                $overalOldPrice = 0;
+
+                // check parts
+
+                if(!is_null($processor))
                 {
-                  $memoryFields = ['title', 'price', 'discount', 'isCouple'];
-                  $memory = \DB::table('memory_modules') -> select($memoryFields)
-                                                         -> where('id', '=', $memoryId)
-                                                         -> where('visibility', 1)
-                                                         -> where('configuratorPart', '=', 1)
-                                                         -> whereIn('stockTypeId', $stockTypesIdentifiers)
-                                                         -> first();
+                  $processorTitle = $processor -> title;
+                  $processorPrice = $processor -> price - $processor -> discount;
+                  $processorOldPrice = $processor -> price;
+                  $processorDiscountVisibility = $processor -> discount == 0 ? 'none' : 'inline';
 
-                  if(!is_null($memory))
+                  $numberOfPartsSelectedByUser += 1;
+                  $overalPrice += $processorPrice;
+                  $overalOldPrice += $processorOldPrice;
+                }
+
+                if(!is_null($motherboard))
+                {
+                  $motherboardTitle = $motherboard -> title;
+                  $motherboardPrice = $motherboard -> price - $motherboard -> discount;
+                  $motherboardOldPrice = $motherboard -> price;
+                  $motherboardDiscountVisibility = $motherboard -> discount == 0 ? 'none' : 'inline';
+
+                  $numberOfPartsSelectedByUser += 1;
+                  $overalPrice += $motherboardPrice;
+                  $overalOldPrice += $motherboardOldPrice;
+                }
+
+                if(!is_null($memory) && $memories)
+                {
+                  $memoryUnitsProvidedByUser = ($memory -> isCouple ? 2 : 1) * $memories;
+
+                  if(!is_null($motherboard) && $memoryUnitsProvidedByUser <= $motherboard -> ramSlots)
                   {
-                    $processorId = abs((int) $configurationParameterValueParts[1]);
-                    $motherboardId = abs((int) $configurationParameterValueParts[2]);
-
-                    if($processorId != 0 && $motherboardId != 0)
-                    {
-                      $processorFields = ['title', 'price', 'discount'];
-                      $processor = \DB::table('processors') -> select($processorFields)
-                                                            -> where('id', '=', $processorId)
-                                                            -> where('visibility', 1)
-                                                            -> where('configuratorPart', '=', 1)
-                                                            -> whereIn('stockTypeId', $stockTypesIdentifiers)
-                                                            -> first();
-
-                      $motherboardFields = ['title', 'price', 'discount', 'ramSlots'];
-
-                      $motherboard = \DB::table('motherboards') -> select($motherboardFields)
-                                                                -> where('id', '=', $motherboardId)
-                                                                -> where('visibility', 1)
-                                                                -> where('configuratorPart', '=', 1)
-                                                                -> whereIn('stockTypeId', $stockTypesIdentifiers)
-                                                                -> first();
-
-                      if(!is_null($motherboard) && !is_null($processor))
-                      {
-                        $memoryUnitsProvidedByUser = ($memory -> isCouple ? 2 : 1) * $memories;
-
-                        if($memoryUnitsProvidedByUser <=  $motherboard -> ramSlots)
-                        {
-                          // contact information data
-
-                          $email = 'არ არის მითითებული';
-                          $phone = 'არ არის მითითებული';
-                          $address = 'არ არის მითითებული';
-                          $schedule = 'არ არის მითითებული';
-
-                          // key logic
-
-                          $numberOfPartsSelectedByUser = 3;
-                          $assemblyPrice = 0;
-                          $overalPrice = 0;
-                          $overalOldPrice = 0;
-                          $overalOldPriceVisibility = 'none';
-
-                          // optional parts identifiers
-
-                          $videoCardId = abs((int) $configurationParameterValueParts[3]);
-                          $powerSupplyId = abs((int) $configurationParameterValueParts[4]);
-                          $processorCoolerId = abs((int) $configurationParameterValueParts[5]);
-                          $caseId = abs((int) $configurationParameterValueParts[6]);
-                          $hardDiskDriveId = abs((int) $configurationParameterValueParts[7]);
-                          $solidStateDiskDriveId = abs((int) $configurationParameterValueParts[8]);
-
-                          // system block parts titles
-
-                          $processorTitle = $processor -> title;
-                          $motherboardTitle = $motherboard -> title;
-                          $memoryTitle = $memory -> title;
-                          $videoCardTitle = 'არ არის არჩეული';
-                          $powerSupplyTitle = 'არ არის არჩეული';
-                          $processorCoolerTitle = 'არ არის არჩეული';
-                          $caseTitle = 'არ არის არჩეული';
-                          $hardDiskDriveTitle = 'არ არის არჩეული';
-                          $solidStateDriveTitle = 'არ არის არჩეული';
-
-                          // system block parts new prices
-
-                          $processorPrice = $processor -> price - $processor -> discount;
-                          $motherboardPrice = $motherboard -> price - $motherboard -> discount;
-                          $memoryPrice = $memories * ($memory -> price - $memory -> discount);
-                          $videoCardPrice = 0;
-                          $powerSupplyPrice = 0;
-                          $processorCoolerPrice = 0;
-                          $casePrice = 0;
-                          $hardDiskDrivePrice = 0;
-                          $solidStateDrivePrice = 0;
-
-                          // system block parts old prices
-
-                          $processorOldPrice = $processor -> price;
-                          $motherboardOldPrice = $motherboard -> price;
-                          $memoryOldPrice = $memories * $memory -> price;
-                          $videoCardOldPrice = 0;
-                          $powerSupplyOldPrice = 0;
-                          $processorCoolerOldPrice = 0;
-                          $caseOldPrice = 0;
-                          $hardDiskDriveOldPrice = 0;
-                          $solidStateDriveOldPrice = 0;
-
-                          // discounts visibilities
-
-                          $processorDiscountVisibility = $processor -> discount == 0 ? 'none' : 'inline';
-                          $motherboardDiscountVisibility = $motherboard -> discount == 0 ? 'none' : 'inline';
-                          $memoryDiscountVisibility = $memories * $memory -> discount == 0 ? 'none' : 'inline';
-                          $videoCardDiscountVisibility = 'none';
-                          $powerSupplyDiscountVisibility = 'none';
-                          $processorCoolerDiscountVisibility = 'none';
-                          $caseDiscountVisibility = 'none';
-                          $hardDiskDriveDiscountVisibility = 'none';
-                          $solidStateDriveDiscountVisibility = 'none';
-
-                          // initialize optional parts fields
-
-                          $optionalPartsfields = ['title', 'price', 'discount'];
-
-                          // select optional parts
-
-                          $videoCard = \DB::table('video_cards') -> select($optionalPartsfields) -> where('id', '=', $videoCardId) -> where('visibility', 1) -> where('configuratorPart', '=', 1) -> whereIn('stockTypeId', $stockTypesIdentifiers) -> first();
-                          $powerSupply = \DB::table('power_supplies') -> select($optionalPartsfields) -> where('id', '=', $powerSupplyId) -> where('visibility', 1) -> where('configuratorPart', '=', 1) -> whereIn('stockTypeId', $stockTypesIdentifiers) -> first();
-                          $processorCooler = \DB::table('processor_coolers') -> select($optionalPartsfields) -> where('id', '=', $processorCoolerId) -> where('visibility', 1) -> where('configuratorPart', '=', 1) -> whereIn('stockTypeId', $stockTypesIdentifiers) -> first();
-                          $case = \DB::table('computer_cases') -> select($optionalPartsfields) -> where('id', '=', $caseId) -> where('visibility', 1) -> where('configuratorPart', '=', 1) -> whereIn('stockTypeId', $stockTypesIdentifiers) -> first();
-                          $hardDiskDrive = \DB::table('hard_disk_drives') -> select($optionalPartsfields) -> where('id', '=', $hardDiskDriveId) -> where('visibility', 1) -> where('configuratorPart', '=', 1) -> whereIn('stockTypeId', $stockTypesIdentifiers) -> first();
-                          $solidStateDrive = \DB::table('solid_state_drives') -> select($optionalPartsfields) -> where('id', '=', $solidStateDiskDriveId) -> where('visibility', 1) -> where('configuratorPart', '=', 1) -> whereIn('stockTypeId', $stockTypesIdentifiers) -> first();
-
-                          // sum key data
-
-                          $overalPrice = $processorPrice + $motherboardPrice + $memoryPrice;
-                          $overalOldPrice = $processorOldPrice + $motherboardOldPrice + $memoryOldPrice;
-
-                          // check optional parts
-
-                          if(!is_null($videoCard))
-                          {
-                            $videoCardTitle = $videoCard -> title;
-                            $videoCardPrice = $videoCard -> price - $videoCard -> discount;
-                            $videoCardOldPrice = $videoCard -> price;
-                            $videoCardDiscountVisibility = $videoCard -> discount == 0 ? 'none' : 'inline';
-
-                            $numberOfPartsSelectedByUser += 1;
-                            $overalPrice += $videoCardPrice;
-                            $overalOldPrice += $videoCardOldPrice;
-                          }
-
-                          if(!is_null($powerSupply))
-                          {
-                            $powerSupplyTitle = $powerSupply -> title;
-                            $powerSupplyPrice = $powerSupply -> price - $powerSupply -> discount;
-                            $powerSupplyOldPrice = $powerSupply -> price;
-                            $powerSupplyDiscountVisibility = $powerSupply -> discount == 0 ? 'none' : 'inline';
-
-                            $numberOfPartsSelectedByUser += 1;
-                            $overalPrice += $powerSupplyPrice;
-                            $overalOldPrice += $powerSupplyOldPrice;
-                          }
-
-                          if(!is_null($processorCooler))
-                          {
-                            $processorCoolerTitle = $processorCooler -> title;
-                            $processorCoolerPrice = $processorCooler -> price - $processorCooler -> discount;
-                            $processorCoolerOldPrice = $processorCooler -> price;
-                            $processorCoolerDiscountVisibility = $processorCooler -> discount == 0 ? 'none' : 'inline';
-
-                            $numberOfPartsSelectedByUser += 1;
-                            $overalPrice += $processorCoolerPrice;
-                            $overalOldPrice += $processorCoolerOldPrice;
-                          }
-
-                          if(!is_null($case))
-                          {
-                            $caseTitle = $case -> title;
-                            $casePrice = $case -> price - $case -> discount;
-                            $caseOldPrice = $case -> price;
-                            $caseDiscountVisibility = $case -> discount == 0 ? 'none' : 'inline';
-
-                            $numberOfPartsSelectedByUser += 1;
-                            $overalPrice += $casePrice;
-                            $overalOldPrice += $caseOldPrice;
-                          }
-
-                          if(!is_null($hardDiskDrive))
-                          {
-                            $hardDiskDriveTitle = $hardDiskDrive -> title;
-                            $hardDiskDrivePrice = $hardDiskDrive -> price - $hardDiskDrive -> discount;
-                            $hardDiskDriveOldPrice = $hardDiskDrive -> price;
-                            $hardDiskDriveDiscountVisibility = $hardDiskDrive -> discount == 0 ? 'none' : 'inline';
-
-                            $numberOfPartsSelectedByUser += 1;
-                            $overalPrice += $hardDiskDrivePrice;
-                            $overalOldPrice += $hardDiskDriveOldPrice;
-                          }
-
-                          if(!is_null($solidStateDrive))
-                          {
-                            $solidStateDriveTitle = $solidStateDrive -> title;
-                            $solidStateDrivePrice = $solidStateDrive -> price - $solidStateDrive -> discount;
-                            $solidStateDriveOldPrice = $solidStateDrive -> price;
-                            $solidStateDriveDiscountVisibility = $solidStateDrive -> discount == 0 ? 'none' : 'inline';
-
-                            $numberOfPartsSelectedByUser += 1;
-                            $overalPrice += $solidStateDrivePrice;
-                            $overalOldPrice += $solidStateDriveOldPrice;
-                          }
-
-                          // determine key moments
-
-                          $assemblyPrice = $numberOfPartsSelectedByUser == 9 ? 0 : 50;
-                          $overalOldPriceVisibility = ($overalOldPrice - $overalPrice - $assemblyPrice) <= 0 ? 'none' : 'inline';
-
-                          // pdf document generation logic
-
-                          $htmlText = file_get_contents($templateName);
-
-                          $htmlText = str_replace('{address}', \URL::to('/'), $htmlText);
-
-                          // replace titles
-
-                          $titlesPlaceholders = ['{processorTitle}', '{motherboardTitle}', '{memoryTitle}', '{videoCardTitle}', '{powerSupplyTitle}', '{hardDiskDriveTitle}', '{solidStateDriveTitle}', '{processorCoolerTitle}', '{caseTitle}', '{memories}'];
-                          $titlesToInsert = [$processorTitle, $motherboardTitle, $memoryTitle, $videoCardTitle, $powerSupplyTitle, $hardDiskDriveTitle, $solidStateDriveTitle, $processorCoolerTitle, $caseTitle, $memoryUnitsProvidedByUser];
-
-                          $htmlText = str_replace($titlesPlaceholders, $titlesToInsert, $htmlText);
-
-                          // replace prices
-
-                          $pricesPlaceholders = ['{processorPrice}', '{motherboardPrice}', '{memoryPrice}', '{videoCardPrice}', '{powerSupplyPrice}', '{hardDiskDrivePrice}', '{solidStateDrivePrice}', '{processorCoolerPrice}', '{casePrice}'];
-                          $pricesToInsert = [$processorPrice, $motherboardPrice, $memoryPrice, $videoCardPrice, $powerSupplyPrice, $hardDiskDrivePrice, $solidStateDrivePrice, $processorCoolerPrice, $casePrice];
-
-                          $htmlText = str_replace($pricesPlaceholders, $pricesToInsert, $htmlText);
-
-                          // replace old prices
-
-                          $oldPricesPlaceholders = ['{processorOldPrice}', '{motherboardOldPrice}', '{memoryOldPrice}', '{videoCardOldPrice}', '{powerSupplyOldPrice}', '{hardDiskDriveOldPrice}', '{solidStateDriveOldPrice}', '{processorCoolerOldPrice}', '{caseOldPrice}'];
-                          $oldPricesToInsert = [$processorOldPrice, $motherboardOldPrice, $memoryOldPrice, $videoCardOldPrice, $powerSupplyOldPrice, $hardDiskDriveOldPrice, $solidStateDriveOldPrice, $processorCoolerOldPrice, $caseOldPrice];
-
-                          $htmlText = str_replace($oldPricesPlaceholders, $oldPricesToInsert, $htmlText);
-
-                          // replace key prices
-
-                          $overalPrice = $overalPrice + $assemblyPrice;
-
-                          $keyPricesPlaceholders = ['{configurationPrice}', '{oldPrice}', '{assemblyPrice}', '{overalOldPriceVisibility}'];
-                          $keyPricesToInsert = [$overalPrice, $overalOldPrice, $assemblyPrice, $overalOldPriceVisibility];
-
-                          $htmlText = str_replace($keyPricesPlaceholders, $keyPricesToInsert, $htmlText);
-
-                          // replace discount visibilities
-
-                          $discountVisibilityPlaceholders = ['{processorDiscountVisibility}', '{motherboardDiscountVisibility}', '{memoryDiscountVisibility}', '{videoCardDiscountVisibility}', '{powerSupplyDiscountVisibility}', '{processorCoolerDiscountVisibility}', '{caseDiscountVisibility}', '{hardDiskDriveDiscountVisibility}', '{solidStateDriveDiscountVisibility}'];
-                          $discountVisibilitiesToInsert = [$processorDiscountVisibility, $motherboardDiscountVisibility, $memoryDiscountVisibility, $videoCardDiscountVisibility, $powerSupplyDiscountVisibility, $processorCoolerDiscountVisibility, $caseDiscountVisibility, $hardDiskDriveDiscountVisibility, $solidStateDriveDiscountVisibility];
-
-                          $htmlText = str_replace($discountVisibilityPlaceholders, $discountVisibilitiesToInsert, $htmlText);
-
-                          // check contact information
-
-                          $contactInformationFieldsToSelect = ['email', 'phone', 'address', 'schedule'];
-                          $contactInformation = \DB::table('contacts') -> select($contactInformationFieldsToSelect) -> first();
-
-                          if(!is_null($contactInformation))
-                          {
-                            $email = $contactInformation -> email;
-                            $phone = $contactInformation -> phone;
-                            $companyAddress = $contactInformation -> address;
-                            $schedule = $contactInformation -> schedule;
-                          }
-
-                          $contactInformationPlaceholders = ['{email}', '{phone}', '{companyAddress}', '{schedule}'];
-                          $contactInformationToInsert = [$email, $phone, $companyAddress, $schedule];
-
-                          $htmlText = str_replace($contactInformationPlaceholders, $contactInformationToInsert, $htmlText);
-
-                          $data['documentHtmlText'] = $htmlText;
-                          $data['documentName'] = "itworks-" . substr(md5(mt_rand()), 0, 8) . ".pdf";
-                        }
-                      }
-                    }
+                    $memoryTitle = $memory -> title;
+                    $memoryPrice = $memories * ($memory -> price - $memory -> discount);
+                    $memoryOldPrice = $memories * $memory -> price;
+                    $memoryDiscountVisibility = $memory -> discount == 0 ? 'none' : 'inline';
+
+                    $numberOfPartsSelectedByUser += 1;
+                    $overalPrice += $memoryPrice;
+                    $overalOldPrice += $memoryOldPrice;
                   }
                 }
+
+                if(!is_null($videoCard))
+                {
+                  $videoCardTitle = $videoCard -> title;
+                  $videoCardPrice = $videoCard -> price - $videoCard -> discount;
+                  $videoCardOldPrice = $videoCard -> price;
+                  $videoCardDiscountVisibility = $videoCard -> discount == 0 ? 'none' : 'inline';
+
+                  $numberOfPartsSelectedByUser += 1;
+                  $overalPrice += $videoCardPrice;
+                  $overalOldPrice += $videoCardOldPrice;
+                }
+
+                if(!is_null($powerSupply))
+                {
+                  $powerSupplyTitle = $powerSupply -> title;
+                  $powerSupplyPrice = $powerSupply -> price - $powerSupply -> discount;
+                  $powerSupplyOldPrice = $powerSupply -> price;
+                  $powerSupplyDiscountVisibility = $powerSupply -> discount == 0 ? 'none' : 'inline';
+
+                  $numberOfPartsSelectedByUser += 1;
+                  $overalPrice += $powerSupplyPrice;
+                  $overalOldPrice += $powerSupplyOldPrice;
+                }
+
+                if(!is_null($processorCooler))
+                {
+                  $processorCoolerTitle = $processorCooler -> title;
+                  $processorCoolerPrice = $processorCooler -> price - $processorCooler -> discount;
+                  $processorCoolerOldPrice = $processorCooler -> price;
+                  $processorCoolerDiscountVisibility = $processorCooler -> discount == 0 ? 'none' : 'inline';
+
+                  $numberOfPartsSelectedByUser += 1;
+                  $overalPrice += $processorCoolerPrice;
+                  $overalOldPrice += $processorCoolerOldPrice;
+                }
+
+                if(!is_null($case))
+                {
+                  $caseTitle = $case -> title;
+                  $casePrice = $case -> price - $case -> discount;
+                  $caseOldPrice = $case -> price;
+                  $caseDiscountVisibility = $case -> discount == 0 ? 'none' : 'inline';
+
+                  $numberOfPartsSelectedByUser += 1;
+                  $overalPrice += $casePrice;
+                  $overalOldPrice += $caseOldPrice;
+                }
+
+                if(!is_null($hardDiskDrive))
+                {
+                  $hardDiskDriveTitle = $hardDiskDrive -> title;
+                  $hardDiskDrivePrice = $hardDiskDrive -> price - $hardDiskDrive -> discount;
+                  $hardDiskDriveOldPrice = $hardDiskDrive -> price;
+                  $hardDiskDriveDiscountVisibility = $hardDiskDrive -> discount == 0 ? 'none' : 'inline';
+
+                  $numberOfPartsSelectedByUser += 1;
+                  $overalPrice += $hardDiskDrivePrice;
+                  $overalOldPrice += $hardDiskDriveOldPrice;
+                }
+
+                if(!is_null($solidStateDrive))
+                {
+                  $solidStateDriveTitle = $solidStateDrive -> title;
+                  $solidStateDrivePrice = $solidStateDrive -> price - $solidStateDrive -> discount;
+                  $solidStateDriveOldPrice = $solidStateDrive -> price;
+                  $solidStateDriveDiscountVisibility = $solidStateDrive -> discount == 0 ? 'none' : 'inline';
+
+                  $numberOfPartsSelectedByUser += 1;
+                  $overalPrice += $solidStateDrivePrice;
+                  $overalOldPrice += $solidStateDriveOldPrice;
+                }
+
+                // peripherals display
+
+                $monitorDisplay = 'none';
+                $headphoneDisplay = 'none';
+                $keyboardDisplay = 'none';
+                $computerMouseDisplay = 'none';
+
+                // check peripherals
+
+                if(!is_null($monitor))
+                {
+                  $monitorTitle = $monitor -> title;
+                  $monitorPrice = $monitor -> price - $monitor -> discount;
+                  $monitorOldPrice = $monitor -> price;
+                  $monitorDiscountVisibility = $monitor -> discount == 0 ? 'none' : 'inline';
+
+                  $monitorDisplay = 'block';
+                  $overalPrice += $monitorPrice;
+                  $overalOldPrice += $monitorOldPrice;
+                }
+
+                if(!is_null($headphone))
+                {
+                  $headphoneTitle = $headphone -> title;
+                  $headphonePrice = $headphone -> price - $headphone -> discount;
+                  $headphoneOldPrice = $headphone -> price;
+                  $headphoneDiscountVisibility = $headphone -> discount == 0 ? 'none' : 'inline';
+
+                  $headphoneDisplay = 'block';
+                  $overalPrice += $headphonePrice;
+                  $overalOldPrice += $headphoneOldPrice;
+                }
+
+                if(!is_null($keyboard))
+                {
+                  $keyboardTitle = $keyboard -> title;
+                  $keyboardPrice = $keyboard -> price - $keyboard -> discount;
+                  $keyboardOldPrice = $keyboard -> price;
+                  $keyboardDiscountVisibility = $keyboard -> discount == 0 ? 'none' : 'inline';
+
+                  $keyboardDisplay = 'block';
+                  $overalPrice += $keyboardPrice;
+                  $overalOldPrice += $keyboardOldPrice;
+                }
+
+                if(!is_null($computerMouse))
+                {
+                  $computerMouseTitle = $computerMouse -> title;
+                  $computerMousePrice = $computerMouse -> price - $computerMouse -> discount;
+                  $computerMouseOldPrice = $computerMouse -> price;
+                  $computerMouseDiscountVisibility = $computerMouse -> discount == 0 ? 'none' : 'inline';
+
+                  $computerMouseDisplay = 'block';
+                  $overalPrice += $computerMousePrice;
+                  $overalOldPrice += $computerMouseOldPrice;
+                }
+
+                // determine key moments
+
+                $assemblyPrice = $numberOfPartsSelectedByUser && $numberOfPartsSelectedByUser < 9 ? 50 : 0;
+                $overalOldPriceVisibility = ($overalOldPrice - $overalPrice - $assemblyPrice) <= 0 ? 'none' : 'inline';
+
+                // pdf document generation logic
+
+                $htmlText = file_get_contents($templateName);
+                $htmlText = str_replace('{address}', \URL::to('/'), $htmlText);
+
+                // replace titles
+
+                $titlesPlaceholders = ['{processorTitle}', '{motherboardTitle}', '{memoryTitle}', '{videoCardTitle}', '{powerSupplyTitle}', '{hardDiskDriveTitle}', '{solidStateDriveTitle}', '{processorCoolerTitle}', '{caseTitle}', '{memories}', '{monitorTitle}', '{headphoneTitle}', '{keyboardTitle}', '{computerMouseTitle}'];
+                $titlesToInsert = [$processorTitle, $motherboardTitle, $memoryTitle, $videoCardTitle, $powerSupplyTitle, $hardDiskDriveTitle, $solidStateDriveTitle, $processorCoolerTitle, $caseTitle, $memoryUnitsProvidedByUser, $monitorTitle, $headphoneTitle, $keyboardTitle, $computerMouseTitle];
+
+                $htmlText = str_replace($titlesPlaceholders, $titlesToInsert, $htmlText);
+
+                // replace prices
+
+                $pricesPlaceholders = ['{processorPrice}', '{motherboardPrice}', '{memoryPrice}', '{videoCardPrice}', '{powerSupplyPrice}', '{hardDiskDrivePrice}', '{solidStateDrivePrice}', '{processorCoolerPrice}', '{casePrice}', '{monitorPrice}', '{headphonePrice}', '{keyboardPrice}', '{computerMousePrice}'];
+                $pricesToInsert = [$processorPrice, $motherboardPrice, $memoryPrice, $videoCardPrice, $powerSupplyPrice, $hardDiskDrivePrice, $solidStateDrivePrice, $processorCoolerPrice, $casePrice, $monitorPrice, $headphonePrice, $keyboardPrice, $computerMousePrice];
+
+                $htmlText = str_replace($pricesPlaceholders, $pricesToInsert, $htmlText);
+
+                // replace old prices
+
+                $oldPricesPlaceholders = ['{processorOldPrice}', '{motherboardOldPrice}', '{memoryOldPrice}', '{videoCardOldPrice}', '{powerSupplyOldPrice}', '{hardDiskDriveOldPrice}', '{solidStateDriveOldPrice}', '{processorCoolerOldPrice}', '{caseOldPrice}', '{monitorOldPrice}', '{headphoneOldPrice}', '{keyboardOldPrice}', '{computerMouseOldPrice}'];
+                $oldPricesToInsert = [$processorOldPrice, $motherboardOldPrice, $memoryOldPrice, $videoCardOldPrice, $powerSupplyOldPrice, $hardDiskDriveOldPrice, $solidStateDriveOldPrice, $processorCoolerOldPrice, $caseOldPrice, $monitorOldPrice, $headphoneOldPrice, $keyboardOldPrice, $computerMouseOldPrice];
+
+                $htmlText = str_replace($oldPricesPlaceholders, $oldPricesToInsert, $htmlText);
+
+                // replace key prices
+
+                $overalPrice = $overalPrice + $assemblyPrice;
+
+                $keyPricesPlaceholders = ['{configurationPrice}', '{oldPrice}', '{assemblyPrice}', '{overalOldPriceVisibility}'];
+                $keyPricesToInsert = [$overalPrice, $overalOldPrice, $assemblyPrice, $overalOldPriceVisibility];
+
+                $htmlText = str_replace($keyPricesPlaceholders, $keyPricesToInsert, $htmlText);
+
+                // replace discount visibilities
+
+                $discountVisibilityPlaceholders = ['{processorDiscountVisibility}', '{motherboardDiscountVisibility}', '{memoryDiscountVisibility}', '{videoCardDiscountVisibility}', '{powerSupplyDiscountVisibility}', '{processorCoolerDiscountVisibility}', '{caseDiscountVisibility}', '{hardDiskDriveDiscountVisibility}', '{solidStateDriveDiscountVisibility}', '{monitorDiscountVisibility}', '{headphoneDiscountVisibility}', '{keyboardDiscountVisibility}', '{computerMouseDiscountVisibility}'];
+
+                $discountVisibilitiesToInsert = [$processorDiscountVisibility, $motherboardDiscountVisibility, $memoryDiscountVisibility, $videoCardDiscountVisibility, $powerSupplyDiscountVisibility, $processorCoolerDiscountVisibility, $caseDiscountVisibility, $hardDiskDriveDiscountVisibility, $solidStateDriveDiscountVisibility, $monitorDiscountVisibility, $headphoneDiscountVisibility, $keyboardDiscountVisibility, $computerMouseDiscountVisibility];
+
+                $htmlText = str_replace($discountVisibilityPlaceholders, $discountVisibilitiesToInsert, $htmlText);
+
+                // replace display types of peripherals
+
+                $paripheralsDisplayTypesPlaceholders = ['{monitorDisplay}', '{headphoneDisplay}', '{keyboardDisplay}', '{computerMouseDisplay}'];
+
+                $paripheralsDisplayTypesToInsert = [$monitorDisplay, $headphoneDisplay, $keyboardDisplay, $computerMouseDisplay];
+
+                $htmlText = str_replace($paripheralsDisplayTypesPlaceholders, $paripheralsDisplayTypesToInsert, $htmlText);
+
+                // check contact information
+
+                $contactInformationFieldsToSelect = ['email', 'phone', 'address', 'schedule'];
+                $contactInformation = \DB::table('contacts') -> select($contactInformationFieldsToSelect) -> first();
+
+                if(!is_null($contactInformation))
+                {
+                  $email = $contactInformation -> email;
+                  $phone = $contactInformation -> phone;
+                  $companyAddress = $contactInformation -> address;
+                  $schedule = $contactInformation -> schedule;
+                }
+
+                $contactInformationPlaceholders = ['{email}', '{phone}', '{companyAddress}', '{schedule}'];
+                $contactInformationToInsert = [$email, $phone, $companyAddress, $schedule];
+
+                $htmlText = str_replace($contactInformationPlaceholders, $contactInformationToInsert, $htmlText);
+
+                $data['documentHtmlText'] = $htmlText;
+                $data['documentName'] = "itworks-" . substr(md5(mt_rand()), 0, 8) . ".pdf";
               }
             }
           }
@@ -859,6 +985,94 @@ class ConfiguratorController extends Controllers\Controller
       return View::make('contents.site.configurator.getSolidStateDrives', ['data' => $data]);
     }
 
+    public function getMonitors(Request $request)
+    {
+      $data['filter-parameter'] = 0;
+
+      $fields = ['monitors.id', 'title', 'mainImage', 'price', 'discount', 'quantity', 'conditionTitle', 'stockTitle', 'manufacturerTitle'];
+
+      $query = \DB::table('monitors') -> select($fields)
+                                      -> join('conditions', 'conditions.id', '=', 'monitors.conditionId')
+                                      -> join('stock_types', 'stock_types.id', '=', 'monitors.stockTypeId')
+                                      -> join('monitors_manufacturers', 'monitors_manufacturers.id', '=', 'monitors.monitorManufacturerId')
+                                      -> where('visibility', 1);
+
+      // request data validation
+
+      $parameters = $request -> all();
+
+      $validator = \Validator::make($parameters, ['filter-parameter' => 'required']);
+
+      if(!$validator -> fails())
+      {
+        $manufacturerId = abs((int) $parameters['filter-parameter']);
+
+        if($manufacturerId)
+        {
+          $data['filter-parameter'] = $manufacturerId;
+
+          $query = $query -> where('monitorManufacturerId', $manufacturerId);
+        }
+      }
+
+      $data['manufacturers'] = \DB::table('monitors_manufacturers') -> get();
+      $data['productsExist'] = $query -> count() != 0;
+      $data['products'] = $query -> orderBy('price', 'desc') -> get();
+
+      return View::make('contents.site.configurator.getMonitors', ['data' => $data]);
+    }
+
+    public function getHeadphones()
+    {
+      $fields = ['accessories.id', 'title', 'mainImage', 'price', 'discount', 'quantity', 'conditionTitle', 'stockTitle'];
+
+      $query = \DB::table('accessories') -> select($fields)
+                                         -> join('conditions', 'conditions.id', '=', 'accessories.conditionId')
+                                         -> join('stock_types', 'stock_types.id', '=', 'accessories.stockTypeId')
+                                         -> join('accessories_types', 'accessories_types.id', '=', 'accessories.accessoryTypeId')
+                                         -> where('typeKey', 'hdphn')
+                                         -> where('visibility', 1);
+
+      $data['productsExist'] = $query -> count() != 0;
+      $data['products'] = $query -> orderBy('price', 'desc') -> get();
+
+      return View::make('contents.site.configurator.getHeadphones', ['data' => $data]);
+    }
+
+    public function getKeyboards()
+    {
+      $fields = ['accessories.id', 'title', 'mainImage', 'price', 'discount', 'quantity', 'conditionTitle', 'stockTitle'];
+
+      $query = \DB::table('accessories') -> select($fields)
+                                         -> join('conditions', 'conditions.id', '=', 'accessories.conditionId')
+                                         -> join('stock_types', 'stock_types.id', '=', 'accessories.stockTypeId')
+                                         -> join('accessories_types', 'accessories_types.id', '=', 'accessories.accessoryTypeId')
+                                         -> where('typeKey', 'kbrd')
+                                         -> where('visibility', 1);
+
+      $data['productsExist'] = $query -> count() != 0;
+      $data['products'] = $query -> orderBy('price', 'desc') -> get();
+
+      return View::make('contents.site.configurator.getKeyboards', ['data' => $data]);
+    }
+
+    public function getComputerMice()
+    {
+      $fields = ['accessories.id', 'title', 'mainImage', 'price', 'discount', 'quantity', 'conditionTitle', 'stockTitle'];
+
+      $query = \DB::table('accessories') -> select($fields)
+                                         -> join('conditions', 'conditions.id', '=', 'accessories.conditionId')
+                                         -> join('stock_types', 'stock_types.id', '=', 'accessories.stockTypeId')
+                                         -> join('accessories_types', 'accessories_types.id', '=', 'accessories.accessoryTypeId')
+                                         -> where('typeKey', 'ms')
+                                         -> where('visibility', 1);
+
+      $data['productsExist'] = $query -> count() != 0;
+      $data['products'] = $query -> orderBy('price', 'desc') -> get();
+
+      return View::make('contents.site.configurator.getComputerMice', ['data' => $data]);
+    }
+
     // select computer part logic
 
     public function selectProcessor(Request $request)
@@ -905,7 +1119,7 @@ class ConfiguratorController extends Controllers\Controller
          }
       }
 
-      return response(json_encode($data)) -> header('Content-Type', 'application/json');
+      return $data;
     }
 
     public function selectMotherboard(Request $request)
@@ -958,7 +1172,7 @@ class ConfiguratorController extends Controllers\Controller
          }
       }
 
-      return response(json_encode($data)) -> header('Content-Type', 'application/json');
+      return $data;
     }
 
     public function selectMemory(Request $request)
@@ -994,7 +1208,7 @@ class ConfiguratorController extends Controllers\Controller
          }
       }
 
-      return response(json_encode($data)) -> header('Content-Type', 'application/json');
+      return $data;
     }
 
     public function selectProcessorCooler(Request $request)
@@ -1028,7 +1242,7 @@ class ConfiguratorController extends Controllers\Controller
          }
       }
 
-      return response(json_encode($data)) -> header('Content-Type', 'application/json');
+      return $data;
     }
 
     public function selectCase(Request $request)
@@ -1062,7 +1276,7 @@ class ConfiguratorController extends Controllers\Controller
          }
       }
 
-      return response(json_encode($data)) -> header('Content-Type', 'application/json');
+      return $data;
     }
 
     public function selectPowerSupply(Request $request)
@@ -1101,7 +1315,7 @@ class ConfiguratorController extends Controllers\Controller
          }
       }
 
-      return response(json_encode($data)) -> header('Content-Type', 'application/json');
+      return $data;
     }
 
     public function selectVideoCard(Request $request)
@@ -1140,7 +1354,7 @@ class ConfiguratorController extends Controllers\Controller
          }
       }
 
-      return response(json_encode($data)) -> header('Content-Type', 'application/json');
+      return $data;
     }
 
     public function selectHardDiskDrive(Request $request)
@@ -1174,7 +1388,7 @@ class ConfiguratorController extends Controllers\Controller
          }
       }
 
-      return response(json_encode($data)) -> header('Content-Type', 'application/json');
+      return $data;
     }
 
     public function selectSolidStateDrive(Request $request)
@@ -1208,6 +1422,160 @@ class ConfiguratorController extends Controllers\Controller
          }
       }
 
-      return response(json_encode($data)) -> header('Content-Type', 'application/json');
+      return $data;
+    }
+
+    public function selectMonitor(Request $request)
+    {
+      $data['partExists'] = false;
+      $data['price'] = 0;
+      $data['discount'] = 0;
+
+      // request data validation logic
+
+      $parameters = $request -> all();
+
+      $validator = \Validator::make($parameters, ['part-id' => 'required']);
+
+      if(!$validator -> fails())
+      {
+         $partId = abs((int) $parameters['part-id']);
+
+         if($partId)
+         {
+           $fieldsToSelect = ['monitors.id', 'price', 'discount'];
+
+           $computerPart = \DB::table('monitors') -> select($fieldsToSelect)
+                                                     -> where('monitors.id', '=', $partId)
+                                                     -> where('visibility', 1)
+                                                     -> first();
+
+           if(!is_null($computerPart))
+           {
+             $data['partExists'] = true;
+             $data['price'] = $computerPart -> price;
+             $data['discount'] = $computerPart -> discount;
+           }
+         }
+      }
+
+      return $data;
+    }
+
+    public function selectHeadphone(Request $request)
+    {
+      $data['partExists'] = false;
+      $data['price'] = 0;
+      $data['discount'] = 0;
+
+      // request data validation logic
+
+      $parameters = $request -> all();
+
+      $validator = \Validator::make($parameters, ['part-id' => 'required']);
+
+      if(!$validator -> fails())
+      {
+         $partId = abs((int) $parameters['part-id']);
+
+         if($partId)
+         {
+           $fieldsToSelect = ['accessories.id', 'price', 'discount'];
+
+           $computerPart = \DB::table('accessories') -> select($fieldsToSelect)
+                                                     -> where('accessories.id', '=', $partId)
+                                                     -> where('visibility', 1)
+                                                     -> where('typeKey', 'hdphn')
+                                                     -> join('accessories_types', 'accessories.accessoryTypeId', 'accessories_types.id')
+                                                     -> first();
+
+           if(!is_null($computerPart))
+           {
+             $data['partExists'] = true;
+             $data['price'] = $computerPart -> price;
+             $data['discount'] = $computerPart -> discount;
+           }
+         }
+      }
+
+      return $data;
+    }
+
+    public function selectKeyboard(Request $request)
+    {
+      $data['partExists'] = false;
+      $data['price'] = 0;
+      $data['discount'] = 0;
+
+      // request data validation logic
+
+      $parameters = $request -> all();
+
+      $validator = \Validator::make($parameters, ['part-id' => 'required']);
+
+      if(!$validator -> fails())
+      {
+         $partId = abs((int) $parameters['part-id']);
+
+         if($partId)
+         {
+           $fieldsToSelect = ['accessories.id', 'price', 'discount'];
+
+           $computerPart = \DB::table('accessories') -> select($fieldsToSelect)
+                                                     -> where('accessories.id', '=', $partId)
+                                                     -> where('visibility', 1)
+                                                     -> where('typeKey', 'kbrd')
+                                                     -> join('accessories_types', 'accessories.accessoryTypeId', 'accessories_types.id')
+                                                     -> first();
+
+           if(!is_null($computerPart))
+           {
+             $data['partExists'] = true;
+             $data['price'] = $computerPart -> price;
+             $data['discount'] = $computerPart -> discount;
+           }
+         }
+      }
+
+      return $data;
+    }
+
+    public function selectComputerMouse(Request $request)
+    {
+      $data['partExists'] = false;
+      $data['price'] = 0;
+      $data['discount'] = 0;
+
+      // request data validation logic
+
+      $parameters = $request -> all();
+
+      $validator = \Validator::make($parameters, ['part-id' => 'required']);
+
+      if(!$validator -> fails())
+      {
+         $partId = abs((int) $parameters['part-id']);
+
+         if($partId)
+         {
+           $fieldsToSelect = ['accessories.id', 'price', 'discount'];
+
+           $computerPart = \DB::table('accessories') -> select($fieldsToSelect)
+                                                     -> where('accessories.id', '=', $partId)
+                                                     -> where('visibility', 1)
+                                                     -> where('typeKey', 'ms')
+                                                     -> join('accessories_types', 'accessories.accessoryTypeId', 'accessories_types.id')
+                                                     -> first();
+
+           if(!is_null($computerPart))
+           {
+             $data['partExists'] = true;
+             $data['price'] = $computerPart -> price;
+             $data['discount'] = $computerPart -> discount;
+           }
+         }
+      }
+
+      return $data;
     }
 }

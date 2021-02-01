@@ -42,7 +42,7 @@ class ConfiguratorController extends Controllers\Controller
 
         $templateName = base_path() . '/resources/views/contents/site/configurator/document.blade.php';
 
-        if(file_exists($templateName))
+        if (file_exists($templateName))
         {
           $configurationParameterValueParts = explode(':', $configurationParameterValue);
           $peripheralsParameterValueParts = explode(':', $peripheralsParameterValue);

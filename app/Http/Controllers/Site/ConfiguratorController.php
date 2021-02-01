@@ -35,7 +35,7 @@ class ConfiguratorController extends Controllers\Controller
       $validator = \Validator::make($parameters, ['parts' => 'required',
                                                   'peripherals' => 'required']);
 
-      if(!$validator -> fails())
+      if (!$validator -> fails())
       {
         $configurationParameterValue = $parameters['parts'];
         $peripheralsParameterValue = $parameters['peripherals'];
@@ -47,19 +47,19 @@ class ConfiguratorController extends Controllers\Controller
           $configurationParameterValueParts = explode(':', $configurationParameterValue);
           $peripheralsParameterValueParts = explode(':', $peripheralsParameterValue);
 
-          if(count($configurationParameterValueParts) == 9 && count($peripheralsParameterValueParts) == 4)
+          if (count($configurationParameterValueParts) == 9 && count($peripheralsParameterValueParts) == 4)
           {
             $memoryPart = $configurationParameterValueParts[0];
             $memoryParts = explode('-', $memoryPart);
 
-            if(count($memoryParts) == 2)
+            if (count($memoryParts) == 2)
             {
               $stockTypes = \DB::table('stock_types') -> select(['id']) -> where('configuratorPart', '=', 1) -> get();
               $stockTypesIdentifiers = [];
 
               foreach($stockTypes as $stockType) $stockTypesIdentifiers[] = $stockType -> id;
 
-              if(count($stockTypesIdentifiers) != 0)
+              if (count($stockTypesIdentifiers) != 0)
               {
                 $processorFields = ['title', 'price', 'discount'];
                 $motherboardFields = ['title', 'price', 'discount', 'ramSlots'];

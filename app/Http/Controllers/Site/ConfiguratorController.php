@@ -77,9 +77,9 @@ class ConfiguratorController extends Controllers\Controller
 
                 $numberOfPartsSelectedByUser = 0;
                 $assemblyPrice = 0;
-                $overalPrice = 0;
-                $overalOldPrice = 0;
-                $overalOldPriceVisibility = 'none';
+                $overallPrice = 0;
+                $overallOldPrice = 0;
+                $overallOldPriceVisibility = 'none';
                 $memoryUnitsProvidedByUser = 0;
 
                 // parts identifiers
@@ -214,8 +214,8 @@ class ConfiguratorController extends Controllers\Controller
 
                 // sum key data
 
-                $overalPrice = 0;
-                $overalOldPrice = 0;
+                $overallPrice = 0;
+                $overallOldPrice = 0;
 
                 // check parts
 
@@ -227,8 +227,8 @@ class ConfiguratorController extends Controllers\Controller
                   $processorDiscountVisibility = $processor -> discount == 0 ? 'none' : 'inline';
 
                   $numberOfPartsSelectedByUser += 1;
-                  $overalPrice += $processorPrice;
-                  $overalOldPrice += $processorOldPrice;
+                  $overallPrice += $processorPrice;
+                  $overallOldPrice += $processorOldPrice;
                 }
 
                 if (!is_null($motherboard))
@@ -239,8 +239,8 @@ class ConfiguratorController extends Controllers\Controller
                   $motherboardDiscountVisibility = $motherboard -> discount == 0 ? 'none' : 'inline';
 
                   $numberOfPartsSelectedByUser += 1;
-                  $overalPrice += $motherboardPrice;
-                  $overalOldPrice += $motherboardOldPrice;
+                  $overallPrice += $motherboardPrice;
+                  $overallOldPrice += $motherboardOldPrice;
                 }
 
                 if (!is_null($memory) && $memories)
@@ -255,8 +255,8 @@ class ConfiguratorController extends Controllers\Controller
                     $memoryDiscountVisibility = $memory -> discount == 0 ? 'none' : 'inline';
 
                     $numberOfPartsSelectedByUser += 1;
-                    $overalPrice += $memoryPrice;
-                    $overalOldPrice += $memoryOldPrice;
+                    $overallPrice += $memoryPrice;
+                    $overallOldPrice += $memoryOldPrice;
                   }
                 }
 
@@ -268,8 +268,8 @@ class ConfiguratorController extends Controllers\Controller
                   $videoCardDiscountVisibility = $videoCard -> discount == 0 ? 'none' : 'inline';
 
                   $numberOfPartsSelectedByUser += 1;
-                  $overalPrice += $videoCardPrice;
-                  $overalOldPrice += $videoCardOldPrice;
+                  $overallPrice += $videoCardPrice;
+                  $overallOldPrice += $videoCardOldPrice;
                 }
 
                 if (!is_null($powerSupply))
@@ -280,8 +280,8 @@ class ConfiguratorController extends Controllers\Controller
                   $powerSupplyDiscountVisibility = $powerSupply -> discount == 0 ? 'none' : 'inline';
 
                   $numberOfPartsSelectedByUser += 1;
-                  $overalPrice += $powerSupplyPrice;
-                  $overalOldPrice += $powerSupplyOldPrice;
+                  $overallPrice += $powerSupplyPrice;
+                  $overallOldPrice += $powerSupplyOldPrice;
                 }
 
                 if (!is_null($processorCooler))
@@ -292,8 +292,8 @@ class ConfiguratorController extends Controllers\Controller
                   $processorCoolerDiscountVisibility = $processorCooler -> discount == 0 ? 'none' : 'inline';
 
                   $numberOfPartsSelectedByUser += 1;
-                  $overalPrice += $processorCoolerPrice;
-                  $overalOldPrice += $processorCoolerOldPrice;
+                  $overallPrice += $processorCoolerPrice;
+                  $overallOldPrice += $processorCoolerOldPrice;
                 }
 
                 if (!is_null($case))
@@ -304,8 +304,8 @@ class ConfiguratorController extends Controllers\Controller
                   $caseDiscountVisibility = $case -> discount == 0 ? 'none' : 'inline';
 
                   $numberOfPartsSelectedByUser += 1;
-                  $overalPrice += $casePrice;
-                  $overalOldPrice += $caseOldPrice;
+                  $overallPrice += $casePrice;
+                  $overallOldPrice += $caseOldPrice;
                 }
 
                 if (!is_null($hardDiskDrive))
@@ -316,8 +316,8 @@ class ConfiguratorController extends Controllers\Controller
                   $hardDiskDriveDiscountVisibility = $hardDiskDrive -> discount == 0 ? 'none' : 'inline';
 
                   $numberOfPartsSelectedByUser += 1;
-                  $overalPrice += $hardDiskDrivePrice;
-                  $overalOldPrice += $hardDiskDriveOldPrice;
+                  $overallPrice += $hardDiskDrivePrice;
+                  $overallOldPrice += $hardDiskDriveOldPrice;
                 }
 
                 if (!is_null($solidStateDrive))
@@ -328,8 +328,8 @@ class ConfiguratorController extends Controllers\Controller
                   $solidStateDriveDiscountVisibility = $solidStateDrive -> discount == 0 ? 'none' : 'inline';
 
                   $numberOfPartsSelectedByUser += 1;
-                  $overalPrice += $solidStateDrivePrice;
-                  $overalOldPrice += $solidStateDriveOldPrice;
+                  $overallPrice += $solidStateDrivePrice;
+                  $overallOldPrice += $solidStateDriveOldPrice;
                 }
 
                 // peripherals display
@@ -349,8 +349,8 @@ class ConfiguratorController extends Controllers\Controller
                   $monitorDiscountVisibility = $monitor -> discount == 0 ? 'none' : 'inline';
 
                   $monitorDisplay = 'block';
-                  $overalPrice += $monitorPrice;
-                  $overalOldPrice += $monitorOldPrice;
+                  $overallPrice += $monitorPrice;
+                  $overallOldPrice += $monitorOldPrice;
                 }
 
                 if (!is_null($headphone))
@@ -361,8 +361,8 @@ class ConfiguratorController extends Controllers\Controller
                   $headphoneDiscountVisibility = $headphone -> discount == 0 ? 'none' : 'inline';
 
                   $headphoneDisplay = 'block';
-                  $overalPrice += $headphonePrice;
-                  $overalOldPrice += $headphoneOldPrice;
+                  $overallPrice += $headphonePrice;
+                  $overallOldPrice += $headphoneOldPrice;
                 }
 
                 if (!is_null($keyboard))
@@ -373,8 +373,8 @@ class ConfiguratorController extends Controllers\Controller
                   $keyboardDiscountVisibility = $keyboard -> discount == 0 ? 'none' : 'inline';
 
                   $keyboardDisplay = 'block';
-                  $overalPrice += $keyboardPrice;
-                  $overalOldPrice += $keyboardOldPrice;
+                  $overallPrice += $keyboardPrice;
+                  $overallOldPrice += $keyboardOldPrice;
                 }
 
                 if (!is_null($computerMouse))
@@ -385,14 +385,14 @@ class ConfiguratorController extends Controllers\Controller
                   $computerMouseDiscountVisibility = $computerMouse -> discount == 0 ? 'none' : 'inline';
 
                   $computerMouseDisplay = 'block';
-                  $overalPrice += $computerMousePrice;
-                  $overalOldPrice += $computerMouseOldPrice;
+                  $overallPrice += $computerMousePrice;
+                  $overallOldPrice += $computerMouseOldPrice;
                 }
 
                 // determine key moments
 
                 $assemblyPrice = $numberOfPartsSelectedByUser && $numberOfPartsSelectedByUser < 9 ? 50 : 0;
-                $overalOldPriceVisibility = ($overalOldPrice - $overalPrice - $assemblyPrice) <= 0 ? 'none' : 'inline';
+                $overallOldPriceVisibility = ($overallOldPrice - $overallPrice - $assemblyPrice) <= 0 ? 'none' : 'inline';
 
                 // pdf document generation logic
 
@@ -422,10 +422,10 @@ class ConfiguratorController extends Controllers\Controller
 
                 // replace key prices
 
-                $overalPrice = $overalPrice + $assemblyPrice;
+                $overallPrice = $overallPrice + $assemblyPrice;
 
-                $keyPricesPlaceholders = ['{configurationPrice}', '{oldPrice}', '{assemblyPrice}', '{overalOldPriceVisibility}'];
-                $keyPricesToInsert = [$overalPrice, $overalOldPrice, $assemblyPrice, $overalOldPriceVisibility];
+                $keyPricesPlaceholders = ['{configurationPrice}', '{oldPrice}', '{assemblyPrice}', '{overallOldPriceVisibility}'];
+                $keyPricesToInsert = [$overallPrice, $overallOldPrice, $assemblyPrice, $overallOldPriceVisibility];
 
                 $htmlText = str_replace($keyPricesPlaceholders, $keyPricesToInsert, $htmlText);
 

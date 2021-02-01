@@ -190,15 +190,15 @@ class ConfiguratorController extends Controllers\Controller
                 $hardDiskDrive = null;
                 $solidStateDrive = null;
 
-                if($processorId) $processor = \DB::table('processors') -> select($processorFields) -> where('id', '=', $processorId) -> where('visibility', 1) -> where('configuratorPart', '=', 1) -> whereIn('stockTypeId', $stockTypesIdentifiers) -> first();
-                if($motherboardId) $motherboard = \DB::table('motherboards') -> select($motherboardFields) -> where('id', '=', $motherboardId) -> where('visibility', 1) -> where('configuratorPart', '=', 1) -> whereIn('stockTypeId', $stockTypesIdentifiers) -> first();
-                if($memoryId) $memory = \DB::table('memory_modules') -> select($memoryFields) -> where('id', '=', $memoryId) -> where('visibility', 1) -> where('configuratorPart', '=', 1) -> whereIn('stockTypeId', $stockTypesIdentifiers) -> first();
-                if($videoCardId) $videoCard = \DB::table('video_cards') -> select($optionalPartsfields) -> where('id', '=', $videoCardId) -> where('visibility', 1) -> where('configuratorPart', '=', 1) -> whereIn('stockTypeId', $stockTypesIdentifiers) -> first();
-                if($powerSupplyId) $powerSupply = \DB::table('power_supplies') -> select($optionalPartsfields) -> where('id', '=', $powerSupplyId) -> where('visibility', 1) -> where('configuratorPart', '=', 1) -> whereIn('stockTypeId', $stockTypesIdentifiers) -> first();
-                if($processorCoolerId) $processorCooler = \DB::table('processor_coolers') -> select($optionalPartsfields) -> where('id', '=', $processorCoolerId) -> where('visibility', 1) -> where('configuratorPart', '=', 1) -> whereIn('stockTypeId', $stockTypesIdentifiers) -> first();
-                if($caseId) $case = \DB::table('computer_cases') -> select($optionalPartsfields) -> where('id', '=', $caseId) -> where('visibility', 1) -> where('configuratorPart', '=', 1) -> whereIn('stockTypeId', $stockTypesIdentifiers) -> first();
-                if($hardDiskDriveId) $hardDiskDrive = \DB::table('hard_disk_drives') -> select($optionalPartsfields) -> where('id', '=', $hardDiskDriveId) -> where('visibility', 1) -> where('configuratorPart', '=', 1) -> whereIn('stockTypeId', $stockTypesIdentifiers) -> first();
-                if($solidStateDiskDriveId) $solidStateDrive = \DB::table('solid_state_drives') -> select($optionalPartsfields) -> where('id', '=', $solidStateDiskDriveId) -> where('visibility', 1) -> where('configuratorPart', '=', 1) -> whereIn('stockTypeId', $stockTypesIdentifiers) -> first();
+                if ($processorId) $processor = \DB::table('processors') -> select($processorFields) -> where('id', '=', $processorId) -> where('visibility', 1) -> where('configuratorPart', '=', 1) -> whereIn('stockTypeId', $stockTypesIdentifiers) -> first();
+                if ($motherboardId) $motherboard = \DB::table('motherboards') -> select($motherboardFields) -> where('id', '=', $motherboardId) -> where('visibility', 1) -> where('configuratorPart', '=', 1) -> whereIn('stockTypeId', $stockTypesIdentifiers) -> first();
+                if ($memoryId) $memory = \DB::table('memory_modules') -> select($memoryFields) -> where('id', '=', $memoryId) -> where('visibility', 1) -> where('configuratorPart', '=', 1) -> whereIn('stockTypeId', $stockTypesIdentifiers) -> first();
+                if ($videoCardId) $videoCard = \DB::table('video_cards') -> select($optionalPartsfields) -> where('id', '=', $videoCardId) -> where('visibility', 1) -> where('configuratorPart', '=', 1) -> whereIn('stockTypeId', $stockTypesIdentifiers) -> first();
+                if ($powerSupplyId) $powerSupply = \DB::table('power_supplies') -> select($optionalPartsfields) -> where('id', '=', $powerSupplyId) -> where('visibility', 1) -> where('configuratorPart', '=', 1) -> whereIn('stockTypeId', $stockTypesIdentifiers) -> first();
+                if ($processorCoolerId) $processorCooler = \DB::table('processor_coolers') -> select($optionalPartsfields) -> where('id', '=', $processorCoolerId) -> where('visibility', 1) -> where('configuratorPart', '=', 1) -> whereIn('stockTypeId', $stockTypesIdentifiers) -> first();
+                if ($caseId) $case = \DB::table('computer_cases') -> select($optionalPartsfields) -> where('id', '=', $caseId) -> where('visibility', 1) -> where('configuratorPart', '=', 1) -> whereIn('stockTypeId', $stockTypesIdentifiers) -> first();
+                if ($hardDiskDriveId) $hardDiskDrive = \DB::table('hard_disk_drives') -> select($optionalPartsfields) -> where('id', '=', $hardDiskDriveId) -> where('visibility', 1) -> where('configuratorPart', '=', 1) -> whereIn('stockTypeId', $stockTypesIdentifiers) -> first();
+                if ($solidStateDiskDriveId) $solidStateDrive = \DB::table('solid_state_drives') -> select($optionalPartsfields) -> where('id', '=', $solidStateDiskDriveId) -> where('visibility', 1) -> where('configuratorPart', '=', 1) -> whereIn('stockTypeId', $stockTypesIdentifiers) -> first();
 
                 // select peripherals
 
@@ -207,10 +207,10 @@ class ConfiguratorController extends Controllers\Controller
                 $keyboard = null;
                 $computerMouse = null;
 
-                if($monitorId) $monitor = \DB::table('monitors') -> select($optionalPartsfields) -> where('monitors.id', '=', $monitorId) -> where('visibility', 1) -> whereIn('stockTypeId', $stockTypesIdentifiers) -> first();
-                if($headphoneId) $headphone = \DB::table('accessories') -> select($optionalPartsfields) -> join('accessories_types', 'accessories_types.id', '=', 'accessories.accessoryTypeId') -> where('accessories.id', '=', $headphoneId) -> where('visibility', 1) -> where('typeKey', '=', 'hdphn') -> whereIn('stockTypeId', $stockTypesIdentifiers) -> first();
-                if($keyboardId) $keyboard = \DB::table('accessories') -> select($optionalPartsfields) -> join('accessories_types', 'accessories_types.id', '=', 'accessories.accessoryTypeId') -> where('accessories.id', '=', $keyboardId) -> where('visibility', 1) -> where('typeKey', '=', 'kbrd') -> whereIn('stockTypeId', $stockTypesIdentifiers) -> first();
-                if($computerMouseId) $computerMouse = \DB::table('accessories') -> select($optionalPartsfields) -> join('accessories_types', 'accessories_types.id', '=', 'accessories.accessoryTypeId') -> where('accessories.id', '=', $computerMouseId) -> where('visibility', 1) -> where('typeKey', '=', 'ms') -> whereIn('stockTypeId', $stockTypesIdentifiers) -> first();
+                if ($monitorId) $monitor = \DB::table('monitors') -> select($optionalPartsfields) -> where('monitors.id', '=', $monitorId) -> where('visibility', 1) -> whereIn('stockTypeId', $stockTypesIdentifiers) -> first();
+                if ($headphoneId) $headphone = \DB::table('accessories') -> select($optionalPartsfields) -> join('accessories_types', 'accessories_types.id', '=', 'accessories.accessoryTypeId') -> where('accessories.id', '=', $headphoneId) -> where('visibility', 1) -> where('typeKey', '=', 'hdphn') -> whereIn('stockTypeId', $stockTypesIdentifiers) -> first();
+                if ($keyboardId) $keyboard = \DB::table('accessories') -> select($optionalPartsfields) -> join('accessories_types', 'accessories_types.id', '=', 'accessories.accessoryTypeId') -> where('accessories.id', '=', $keyboardId) -> where('visibility', 1) -> where('typeKey', '=', 'kbrd') -> whereIn('stockTypeId', $stockTypesIdentifiers) -> first();
+                if ($computerMouseId) $computerMouse = \DB::table('accessories') -> select($optionalPartsfields) -> join('accessories_types', 'accessories_types.id', '=', 'accessories.accessoryTypeId') -> where('accessories.id', '=', $computerMouseId) -> where('visibility', 1) -> where('typeKey', '=', 'ms') -> whereIn('stockTypeId', $stockTypesIdentifiers) -> first();
 
                 // sum key data
 
@@ -219,7 +219,7 @@ class ConfiguratorController extends Controllers\Controller
 
                 // check parts
 
-                if(!is_null($processor))
+                if (!is_null($processor))
                 {
                   $processorTitle = $processor -> title;
                   $processorPrice = $processor -> price - $processor -> discount;
@@ -231,7 +231,7 @@ class ConfiguratorController extends Controllers\Controller
                   $overalOldPrice += $processorOldPrice;
                 }
 
-                if(!is_null($motherboard))
+                if (!is_null($motherboard))
                 {
                   $motherboardTitle = $motherboard -> title;
                   $motherboardPrice = $motherboard -> price - $motherboard -> discount;
@@ -243,11 +243,11 @@ class ConfiguratorController extends Controllers\Controller
                   $overalOldPrice += $motherboardOldPrice;
                 }
 
-                if(!is_null($memory) && $memories)
+                if (!is_null($memory) && $memories)
                 {
                   $memoryUnitsProvidedByUser = ($memory -> isCouple ? 2 : 1) * $memories;
 
-                  if(!is_null($motherboard) && $memoryUnitsProvidedByUser <= $motherboard -> ramSlots)
+                  if (!is_null($motherboard) && $memoryUnitsProvidedByUser <= $motherboard -> ramSlots)
                   {
                     $memoryTitle = $memory -> title;
                     $memoryPrice = $memories * ($memory -> price - $memory -> discount);
@@ -260,7 +260,7 @@ class ConfiguratorController extends Controllers\Controller
                   }
                 }
 
-                if(!is_null($videoCard))
+                if (!is_null($videoCard))
                 {
                   $videoCardTitle = $videoCard -> title;
                   $videoCardPrice = $videoCard -> price - $videoCard -> discount;
@@ -272,7 +272,7 @@ class ConfiguratorController extends Controllers\Controller
                   $overalOldPrice += $videoCardOldPrice;
                 }
 
-                if(!is_null($powerSupply))
+                if (!is_null($powerSupply))
                 {
                   $powerSupplyTitle = $powerSupply -> title;
                   $powerSupplyPrice = $powerSupply -> price - $powerSupply -> discount;
@@ -284,7 +284,7 @@ class ConfiguratorController extends Controllers\Controller
                   $overalOldPrice += $powerSupplyOldPrice;
                 }
 
-                if(!is_null($processorCooler))
+                if (!is_null($processorCooler))
                 {
                   $processorCoolerTitle = $processorCooler -> title;
                   $processorCoolerPrice = $processorCooler -> price - $processorCooler -> discount;
@@ -296,7 +296,7 @@ class ConfiguratorController extends Controllers\Controller
                   $overalOldPrice += $processorCoolerOldPrice;
                 }
 
-                if(!is_null($case))
+                if (!is_null($case))
                 {
                   $caseTitle = $case -> title;
                   $casePrice = $case -> price - $case -> discount;
@@ -308,7 +308,7 @@ class ConfiguratorController extends Controllers\Controller
                   $overalOldPrice += $caseOldPrice;
                 }
 
-                if(!is_null($hardDiskDrive))
+                if (!is_null($hardDiskDrive))
                 {
                   $hardDiskDriveTitle = $hardDiskDrive -> title;
                   $hardDiskDrivePrice = $hardDiskDrive -> price - $hardDiskDrive -> discount;
@@ -320,7 +320,7 @@ class ConfiguratorController extends Controllers\Controller
                   $overalOldPrice += $hardDiskDriveOldPrice;
                 }
 
-                if(!is_null($solidStateDrive))
+                if (!is_null($solidStateDrive))
                 {
                   $solidStateDriveTitle = $solidStateDrive -> title;
                   $solidStateDrivePrice = $solidStateDrive -> price - $solidStateDrive -> discount;
@@ -341,7 +341,7 @@ class ConfiguratorController extends Controllers\Controller
 
                 // check peripherals
 
-                if(!is_null($monitor))
+                if (!is_null($monitor))
                 {
                   $monitorTitle = $monitor -> title;
                   $monitorPrice = $monitor -> price - $monitor -> discount;
@@ -353,7 +353,7 @@ class ConfiguratorController extends Controllers\Controller
                   $overalOldPrice += $monitorOldPrice;
                 }
 
-                if(!is_null($headphone))
+                if (!is_null($headphone))
                 {
                   $headphoneTitle = $headphone -> title;
                   $headphonePrice = $headphone -> price - $headphone -> discount;
@@ -365,7 +365,7 @@ class ConfiguratorController extends Controllers\Controller
                   $overalOldPrice += $headphoneOldPrice;
                 }
 
-                if(!is_null($keyboard))
+                if (!is_null($keyboard))
                 {
                   $keyboardTitle = $keyboard -> title;
                   $keyboardPrice = $keyboard -> price - $keyboard -> discount;
@@ -377,7 +377,7 @@ class ConfiguratorController extends Controllers\Controller
                   $overalOldPrice += $keyboardOldPrice;
                 }
 
-                if(!is_null($computerMouse))
+                if (!is_null($computerMouse))
                 {
                   $computerMouseTitle = $computerMouse -> title;
                   $computerMousePrice = $computerMouse -> price - $computerMouse -> discount;
@@ -502,11 +502,11 @@ class ConfiguratorController extends Controllers\Controller
 
       $validator = \Validator::make($parameters, ['filter-parameter' => 'required']);
 
-      if(!$validator -> fails())
+      if (!$validator -> fails())
       {
         $filterParameterValue = abs((int) $parameters['filter-parameter']);
 
-        if($filterParameterValue != 0)
+        if ($filterParameterValue != 0)
         {
           $query = $query -> where('seriesId', '=', $filterParameterValue);
 
@@ -553,11 +553,11 @@ class ConfiguratorController extends Controllers\Controller
       $filterValidator = \Validator::make($parameters, ['filter-parameter' => 'required']);
       $chipsetValidator = \Validator::make($parameters, ['chipset' => 'required']);
 
-      if(!$filterValidator -> fails())
+      if (!$filterValidator -> fails())
       {
         $manufacturerId = abs((int) $parameters['filter-parameter']);
 
-        if($manufacturerId != 0)
+        if ($manufacturerId != 0)
         {
           $query = $query -> where('manufacturerId', '=', $manufacturerId);
 
@@ -565,15 +565,15 @@ class ConfiguratorController extends Controllers\Controller
         }
       }
 
-      if(!$chipsetValidator -> fails())
+      if (!$chipsetValidator -> fails())
       {
         $chipset = $parameters['chipset'];
 
-        if($parameters['chipset'] !== '0')
+        if ($parameters['chipset'] !== '0')
         {
           $chipsetParts = array_map('intval', explode(':', $parameters['chipset']));
 
-          if(count($chipsetParts) != 0 && !in_array(0, $chipsetParts))
+          if (count($chipsetParts) != 0 && !in_array(0, $chipsetParts))
           {
             $realChipsets = \DB::table('chipsets') -> select(['id']) -> get();
 
@@ -581,11 +581,11 @@ class ConfiguratorController extends Controllers\Controller
 
             foreach($realChipsets as $chipset) $realChipsetsIdentifiers[] = $chipset -> id;
 
-            if(count($realChipsetsIdentifiers) != 0)
+            if (count($realChipsetsIdentifiers) != 0)
             {
               $chipsetParts = array_unique($chipsetParts);
 
-              if(array_intersect($chipsetParts, $realChipsetsIdentifiers) == $chipsetParts)
+              if (array_intersect($chipsetParts, $realChipsetsIdentifiers) == $chipsetParts)
 
               $query = $query -> whereIn('chipsetId', $chipsetParts);
             }
@@ -633,11 +633,11 @@ class ConfiguratorController extends Controllers\Controller
                                                         'max-memory' => 'required',
                                                         'memory-slots' => 'required']);
 
-      if(!$filterValidator -> fails())
+      if (!$filterValidator -> fails())
       {
         $capacity = abs((int) $parameters['filter-parameter']);
 
-        if($capacity != 0)
+        if ($capacity != 0)
         {
           $query = $query -> where('capacity', '=', $capacity);
 
@@ -645,13 +645,13 @@ class ConfiguratorController extends Controllers\Controller
         }
       }
 
-      if(!$memoryValidator -> fails())
+      if (!$memoryValidator -> fails())
       {
         $memoryType = abs((int) $parameters['memory-type']);
         $maxMemory = abs((int) $parameters['max-memory']);
         $memorySlots = abs((int) $parameters['memory-slots']);
 
-        if($memoryType != 0)
+        if ($memoryType != 0)
         {
           $realMemoryTypes = \DB::table('memory_modules_types') -> select(['id']) -> get();
 
@@ -659,18 +659,18 @@ class ConfiguratorController extends Controllers\Controller
 
           foreach($realMemoryTypes as $type) $realMemoryTypesIdentifiers[] = $type -> id;
 
-          if(in_array($memoryType, $realMemoryTypesIdentifiers))
+          if (in_array($memoryType, $realMemoryTypesIdentifiers))
 
           $query = $query -> where('memoryModuleTypeId', '=', $memoryType);
         }
 
-        if($maxMemory != 0) $query = $query -> where('capacity', '<=', $maxMemory);
+        if ($maxMemory != 0) $query = $query -> where('capacity', '<=', $maxMemory);
       }
 
       $data['partsExist'] = $query -> count() != 0;
       $data['products'] = $query -> orderBy('capacity', 'desc') -> get();
 
-      if($data['partsExist'] && $memorySlots != 0)
+      if ($data['partsExist'] && $memorySlots != 0)
       {
         foreach($data['products'] as $key => $product)
 
@@ -701,11 +701,11 @@ class ConfiguratorController extends Controllers\Controller
 
       $validator = \Validator::make($parameters, ['cpu-socket' => 'required']);
 
-      if(!$validator -> fails())
+      if (!$validator -> fails())
       {
         $cpuSocketId = abs((int) $parameters['cpu-socket']);
 
-        if($cpuSocketId != 0)
+        if ($cpuSocketId != 0)
         {
           $realSockets = \DB::table('cpu_sockets') -> select(['id']) -> where('configuratorPart', '=', 1) -> get();
 
@@ -713,7 +713,7 @@ class ConfiguratorController extends Controllers\Controller
 
           foreach($realSockets as $socket) $realSocketsIdentifiers[] = $socket -> id;
 
-          if(in_array($cpuSocketId, $realSocketsIdentifiers)) $query = $query -> where('socketId', '=', $cpuSocketId);
+          if (in_array($cpuSocketId, $realSocketsIdentifiers)) $query = $query -> where('socketId', '=', $cpuSocketId);
         }
       }
 
@@ -742,11 +742,11 @@ class ConfiguratorController extends Controllers\Controller
 
       $validator = \Validator::make($parameters, ['form-factor' => 'required']);
 
-      if(!$validator -> fails())
+      if (!$validator -> fails())
       {
         $formFactor = abs((int) $parameters['form-factor']);
 
-        if($formFactor != 0)
+        if ($formFactor != 0)
         {
           $realFormFactors = \DB::table('case_form_factors') -> select(['id']) -> get();
 
@@ -754,7 +754,7 @@ class ConfiguratorController extends Controllers\Controller
 
           foreach($realFormFactors as $formFactorType) $realFormFactorsIdentifiers[] = $formFactorType -> id;
 
-          if(in_array($formFactor, $realFormFactorsIdentifiers))
+          if (in_array($formFactor, $realFormFactorsIdentifiers))
           {
             $query = $query -> where('formFactorId', '=', $formFactor);
           }
@@ -764,7 +764,7 @@ class ConfiguratorController extends Controllers\Controller
       $data['partsExist'] = $query -> count() != 0;
       $data['products'] = $query -> groupBy('computer_cases.id') -> orderBy('price', 'desc') -> get();
 
-      if($data['partsExist'])
+      if ($data['partsExist'])
       {
         foreach($data['products'] as $key => $product)
         {
@@ -777,7 +777,7 @@ class ConfiguratorController extends Controllers\Controller
 
           foreach($supportedFormFactors as $supportedFormFactor) $supportedFormFactorsTitles[] = $supportedFormFactor -> formFactorTitle;
 
-          if(count($supportedFormFactorsTitles) != 0) $suppportedFormFactorsFullTitle = implode(', ', $supportedFormFactorsTitles);
+          if (count($supportedFormFactorsTitles) != 0) $suppportedFormFactorsFullTitle = implode(', ', $supportedFormFactorsTitles);
 
           $data['products'][$key] -> formFactorTitle = $suppportedFormFactorsFullTitle;
         }
@@ -804,11 +804,11 @@ class ConfiguratorController extends Controllers\Controller
 
       $validator = \Validator::make($parameters, ['required-power' => 'required']);
 
-      if(!$validator -> fails())
+      if (!$validator -> fails())
       {
         $requiredPower = abs((int) $parameters['required-power']);
 
-        if($requiredPower != 0) $query = $query -> where('power', '>=', $requiredPower);
+        if ($requiredPower != 0) $query = $query -> where('power', '>=', $requiredPower);
       }
 
       $data['partsExist'] = $query -> count() != 0;
@@ -845,11 +845,11 @@ class ConfiguratorController extends Controllers\Controller
       $filterValidator = \Validator::make($parameters, ['filter-parameter' => 'required']);
       $powerValidator = \Validator::make($parameters, ['required-power' => 'required']);
 
-      if(!$filterValidator -> fails())
+      if (!$filterValidator -> fails())
       {
         $filterParameterValue = abs((int) $parameters['filter-parameter']);
 
-        if($filterParameterValue != 0)
+        if ($filterParameterValue != 0)
         {
           $query = $query -> where('memory', '=', $filterParameterValue);
 
@@ -857,11 +857,11 @@ class ConfiguratorController extends Controllers\Controller
         }
       }
 
-      if(!$powerValidator -> fails())
+      if (!$powerValidator -> fails())
       {
         $requiredPower = abs((int) $parameters['required-power']);
 
-        if($requiredPower != 0) $query = $query -> where('minPower', '<=', $requiredPower);
+        if ($requiredPower != 0) $query = $query -> where('minPower', '<=', $requiredPower);
       }
 
       $data['partsExist'] = $query -> count() != 0;
@@ -896,11 +896,11 @@ class ConfiguratorController extends Controllers\Controller
 
       $validator = \Validator::make($parameters, ['filter-parameter' => 'required']);
 
-      if(!$validator -> fails())
+      if (!$validator -> fails())
       {
         $filterParameterValue = abs((int) $parameters['filter-parameter']);
 
-        if($filterParameterValue != 0)
+        if ($filterParameterValue != 0)
         {
           $query = $query -> where('capacity', '=', $filterParameterValue);
 
@@ -942,11 +942,11 @@ class ConfiguratorController extends Controllers\Controller
 
       $typeValidator = \Validator::make($parameters, ['ssd-type' => 'required']);
 
-      if(!$filterValidator -> fails())
+      if (!$filterValidator -> fails())
       {
         $filterParameterValue = abs((int) $parameters['filter-parameter']);
 
-        if($filterParameterValue != 0)
+        if ($filterParameterValue != 0)
         {
           $query = $query -> where('capacity', '=', $filterParameterValue);
 
@@ -954,15 +954,15 @@ class ConfiguratorController extends Controllers\Controller
         }
       }
 
-      if(!$typeValidator -> fails())
+      if (!$typeValidator -> fails())
       {
         $ssdType = $parameters['ssd-type'];
 
-        if($parameters['ssd-type'] !== "0")
+        if ($parameters['ssd-type'] !== "0")
         {
           $ssdTypesParts = array_map('intval', explode(':', $ssdType));
 
-          if(count($ssdTypesParts) != 0 && !in_array(0, $ssdTypesParts))
+          if (count($ssdTypesParts) != 0 && !in_array(0, $ssdTypesParts))
           {
             $realSsdTypes = \DB::table('solid_state_drives_form_factors') -> select(['id']) -> get();
 
@@ -972,7 +972,7 @@ class ConfiguratorController extends Controllers\Controller
 
             $ssdTypesParts = array_unique($ssdTypesParts);
 
-            if(array_intersect($ssdTypesParts, $realSsdTypesIdentifiers) == $ssdTypesParts)
+            if (array_intersect($ssdTypesParts, $realSsdTypesIdentifiers) == $ssdTypesParts)
 
             $query = $query -> whereIn('formFactorId', $ssdTypesParts);
           }
@@ -1003,11 +1003,11 @@ class ConfiguratorController extends Controllers\Controller
 
       $validator = \Validator::make($parameters, ['filter-parameter' => 'required']);
 
-      if(!$validator -> fails())
+      if (!$validator -> fails())
       {
         $manufacturerId = abs((int) $parameters['filter-parameter']);
 
-        if($manufacturerId)
+        if ($manufacturerId)
         {
           $data['filter-parameter'] = $manufacturerId;
 
@@ -1092,17 +1092,17 @@ class ConfiguratorController extends Controllers\Controller
 
       $validator = \Validator::make($parameters, ['part-id' => 'required']);
 
-      if(!$validator -> fails())
+      if (!$validator -> fails())
       {
          $partId = abs((int) $parameters['part-id']);
 
-         if($partId != 0)
+         if ($partId != 0)
          {
            $fieldsToSelect = ['price', 'discount', 'id', 'socketId'];
 
            $computerPart = \DB::table('processors') -> select($fieldsToSelect) -> where('id', '=', $partId) -> where('visibility', 1) -> where('configuratorPart', '=', 1) -> first();
 
-           if(!is_null($computerPart))
+           if (!is_null($computerPart))
            {
              $data['partExists'] = true;
              $data['price'] = $computerPart -> price;
@@ -1142,17 +1142,17 @@ class ConfiguratorController extends Controllers\Controller
 
       $validator = \Validator::make($parameters, ['part-id' => 'required']);
 
-      if(!$validator -> fails())
+      if (!$validator -> fails())
       {
          $partId = abs((int) $parameters['part-id']);
 
-         if($partId != 0)
+         if ($partId != 0)
          {
            $fieldsToSelect = ['motherboards.id', 'price', 'discount', 'formFactorId', 'maxMemory', 'ramSlots', 'memoryTypeId'];
 
            $computerPart = \DB::table('motherboards') -> select($fieldsToSelect) -> where('id', '=', $partId) -> where('visibility', 1) -> where('configuratorPart', '=', 1) -> first();
 
-           if(!is_null($computerPart))
+           if (!is_null($computerPart))
            {
              $data['partExists'] = true;
              $data['price'] = $computerPart -> price;
@@ -1188,18 +1188,18 @@ class ConfiguratorController extends Controllers\Controller
       $validator = \Validator::make($parameters, ['part-id' => 'required',
                                                   'quantity' => 'required']);
 
-      if(!$validator -> fails())
+      if (!$validator -> fails())
       {
          $partId = abs((int) $parameters['part-id']);
          $quantity = abs((int) $parameters['quantity']);
 
-         if($partId != 0 && $quantity != 0)
+         if ($partId != 0 && $quantity != 0)
          {
            $fieldsToSelect = ['price', 'discount', 'id'];
 
            $computerPart = \DB::table('memory_modules') -> select($fieldsToSelect) -> where('id', '=', $partId) -> where('visibility', 1) -> where('configuratorPart', '=', 1) -> first();
 
-           if(!is_null($computerPart))
+           if (!is_null($computerPart))
            {
              $data['partExists'] = true;
              $data['price'] = $computerPart -> price * $quantity;
@@ -1223,17 +1223,17 @@ class ConfiguratorController extends Controllers\Controller
 
       $validator = \Validator::make($parameters, ['part-id' => 'required']);
 
-      if(!$validator -> fails())
+      if (!$validator -> fails())
       {
          $partId = abs((int) $parameters['part-id']);
 
-         if($partId != 0)
+         if ($partId != 0)
          {
            $fieldsToSelect = ['price', 'discount', 'id'];
 
            $computerPart = \DB::table('processor_coolers') -> select($fieldsToSelect) -> where('id', '=', $partId) -> where('visibility', 1) -> where('configuratorPart', '=', 1) -> first();
 
-           if(!is_null($computerPart))
+           if (!is_null($computerPart))
            {
              $data['partExists'] = true;
              $data['price'] = $computerPart -> price;
@@ -1257,17 +1257,17 @@ class ConfiguratorController extends Controllers\Controller
 
       $validator = \Validator::make($parameters, ['part-id' => 'required']);
 
-      if(!$validator -> fails())
+      if (!$validator -> fails())
       {
          $partId = abs((int) $parameters['part-id']);
 
-         if($partId != 0)
+         if ($partId != 0)
          {
            $fieldsToSelect = ['price', 'discount', 'id'];
 
            $computerPart = \DB::table('computer_cases') -> select($fieldsToSelect) -> where('id', '=', $partId) -> where('visibility', 1) -> where('configuratorPart', '=', 1) -> first();
 
-           if(!is_null($computerPart))
+           if (!is_null($computerPart))
            {
              $data['partExists'] = true;
              $data['price'] = $computerPart -> price;
@@ -1295,17 +1295,17 @@ class ConfiguratorController extends Controllers\Controller
 
       $validator = \Validator::make($parameters, ['part-id' => 'required']);
 
-      if(!$validator -> fails())
+      if (!$validator -> fails())
       {
          $partId = abs((int) $parameters['part-id']);
 
-         if($partId != 0)
+         if ($partId != 0)
          {
            $fieldsToSelect = ['price', 'discount', 'id', 'power'];
 
            $computerPart = \DB::table('power_supplies') -> select($fieldsToSelect) -> where('id', '=', $partId) -> where('visibility', 1) -> where('configuratorPart', '=', 1) -> first();
 
-           if(!is_null($computerPart))
+           if (!is_null($computerPart))
            {
              $data['partExists'] = true;
              $data['price'] = $computerPart -> price;
@@ -1334,17 +1334,17 @@ class ConfiguratorController extends Controllers\Controller
 
       $validator = \Validator::make($parameters, ['part-id' => 'required']);
 
-      if(!$validator -> fails())
+      if (!$validator -> fails())
       {
          $partId = abs((int) $parameters['part-id']);
 
-         if($partId != 0)
+         if ($partId != 0)
          {
            $fieldsToSelect = ['price', 'discount', 'id', 'minPower'];
 
            $computerPart = \DB::table('video_cards') -> select($fieldsToSelect) -> where('id', '=', $partId) -> where('visibility', 1) -> where('configuratorPart', '=', 1) -> first();
 
-           if(!is_null($computerPart))
+           if (!is_null($computerPart))
            {
              $data['partExists'] = true;
              $data['price'] = $computerPart -> price;
@@ -1369,17 +1369,17 @@ class ConfiguratorController extends Controllers\Controller
 
       $validator = \Validator::make($parameters, ['part-id' => 'required']);
 
-      if(!$validator -> fails())
+      if (!$validator -> fails())
       {
          $partId = abs((int) $parameters['part-id']);
 
-         if($partId != 0)
+         if ($partId != 0)
          {
            $fieldsToSelect = ['price', 'discount', 'id'];
 
            $computerPart = \DB::table('hard_disk_drives') -> select($fieldsToSelect) -> where('id', '=', $partId) -> where('visibility', 1) -> where('configuratorPart', '=', 1) -> first();
 
-           if(!is_null($computerPart))
+           if (!is_null($computerPart))
            {
              $data['partExists'] = true;
              $data['price'] = $computerPart -> price;
@@ -1403,17 +1403,17 @@ class ConfiguratorController extends Controllers\Controller
 
       $validator = \Validator::make($parameters, ['part-id' => 'required']);
 
-      if(!$validator -> fails())
+      if (!$validator -> fails())
       {
          $partId = abs((int) $parameters['part-id']);
 
-         if($partId != 0)
+         if ($partId != 0)
          {
            $fieldsToSelect = ['price', 'discount', 'id'];
 
            $computerPart = \DB::table('solid_state_drives') -> select($fieldsToSelect) -> where('id', '=', $partId) -> where('visibility', 1) -> where('configuratorPart', '=', 1) -> first();
 
-           if(!is_null($computerPart))
+           if (!is_null($computerPart))
            {
              $data['partExists'] = true;
              $data['price'] = $computerPart -> price;
@@ -1437,11 +1437,11 @@ class ConfiguratorController extends Controllers\Controller
 
       $validator = \Validator::make($parameters, ['part-id' => 'required']);
 
-      if(!$validator -> fails())
+      if (!$validator -> fails())
       {
          $partId = abs((int) $parameters['part-id']);
 
-         if($partId)
+         if ($partId)
          {
            $fieldsToSelect = ['monitors.id', 'price', 'discount'];
 
@@ -1450,7 +1450,7 @@ class ConfiguratorController extends Controllers\Controller
                                                      -> where('visibility', 1)
                                                      -> first();
 
-           if(!is_null($computerPart))
+           if (!is_null($computerPart))
            {
              $data['partExists'] = true;
              $data['price'] = $computerPart -> price;
@@ -1474,11 +1474,11 @@ class ConfiguratorController extends Controllers\Controller
 
       $validator = \Validator::make($parameters, ['part-id' => 'required']);
 
-      if(!$validator -> fails())
+      if (!$validator -> fails())
       {
          $partId = abs((int) $parameters['part-id']);
 
-         if($partId)
+         if ($partId)
          {
            $fieldsToSelect = ['accessories.id', 'price', 'discount'];
 
@@ -1489,7 +1489,7 @@ class ConfiguratorController extends Controllers\Controller
                                                      -> join('accessories_types', 'accessories.accessoryTypeId', 'accessories_types.id')
                                                      -> first();
 
-           if(!is_null($computerPart))
+           if (!is_null($computerPart))
            {
              $data['partExists'] = true;
              $data['price'] = $computerPart -> price;
@@ -1513,11 +1513,11 @@ class ConfiguratorController extends Controllers\Controller
 
       $validator = \Validator::make($parameters, ['part-id' => 'required']);
 
-      if(!$validator -> fails())
+      if (!$validator -> fails())
       {
          $partId = abs((int) $parameters['part-id']);
 
-         if($partId)
+         if ($partId)
          {
            $fieldsToSelect = ['accessories.id', 'price', 'discount'];
 
@@ -1528,7 +1528,7 @@ class ConfiguratorController extends Controllers\Controller
                                                      -> join('accessories_types', 'accessories.accessoryTypeId', 'accessories_types.id')
                                                      -> first();
 
-           if(!is_null($computerPart))
+           if (!is_null($computerPart))
            {
              $data['partExists'] = true;
              $data['price'] = $computerPart -> price;
@@ -1552,11 +1552,11 @@ class ConfiguratorController extends Controllers\Controller
 
       $validator = \Validator::make($parameters, ['part-id' => 'required']);
 
-      if(!$validator -> fails())
+      if (!$validator -> fails())
       {
          $partId = abs((int) $parameters['part-id']);
 
-         if($partId)
+         if ($partId)
          {
            $fieldsToSelect = ['accessories.id', 'price', 'discount'];
 
@@ -1567,7 +1567,7 @@ class ConfiguratorController extends Controllers\Controller
                                                      -> join('accessories_types', 'accessories.accessoryTypeId', 'accessories_types.id')
                                                      -> first();
 
-           if(!is_null($computerPart))
+           if (!is_null($computerPart))
            {
              $data['partExists'] = true;
              $data['price'] = $computerPart -> price;

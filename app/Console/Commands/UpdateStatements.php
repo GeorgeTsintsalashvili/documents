@@ -283,7 +283,7 @@ class UpdateStatements extends Command
     {
       date_default_timezone_set('Asia/Tbilisi');
 
-      $updatePermited = false;
+      $updateAllowed = false;
 
       $currentTimestamp = time();
       $currentHour = (int) date('G', $currentTimestamp);
@@ -301,7 +301,7 @@ class UpdateStatements extends Command
 
       if (preg_match($anyHourPattern, $schedule) && $currentMinutes == 60)
       {
-        $updatePermited = true;
+        $updateAllowed = true;
       }
 
       else if (preg_match($anyHourSpecificMinuteIntervalPattern, $schedule))
@@ -311,7 +311,7 @@ class UpdateStatements extends Command
 
         if (in_array($minutesInterval, $allowedMinutesIntervals) && ($currentMinutes % $minutesInterval) == 0)
         {
-          $updatePermited = true;
+          $updateAllowed = true;
         }
       }
 
@@ -327,7 +327,7 @@ class UpdateStatements extends Command
 
         if (in_array($currentHour, $specificHoursSchedule) && $currentMinutes == 60)
 
-        $updatePermited = true;
+        $updateAllowed = true;
       }
 
       else if (preg_match($specificHoursMinutesIntervalPattern, $schedule))
@@ -346,7 +346,7 @@ class UpdateStatements extends Command
 
         if (in_array($minutesInterval, $allowedMinutesIntervals) && in_array($currentHour, $specificHoursScheduleParts))
 
-        $updatePermited = true;
+        $updateAllowed = true;
       }
 
       else if (preg_match($specificHoursRangesPattern, $schedule))
@@ -364,7 +364,7 @@ class UpdateStatements extends Command
 
           if ($lowerBound <= $currentHour && $currentHour <= $upperBound)
           {
-            $updatePermited = true;
+            $updateAllowed = true;
 
             break;
           }
@@ -393,7 +393,7 @@ class UpdateStatements extends Command
 
             if ($lowerBound <= $currentHour && $currentHour <= $upperBound)
             {
-              $updatePermited = true;
+              $updateAllowed = true;
 
               break;
             }
@@ -401,6 +401,6 @@ class UpdateStatements extends Command
         }
       }
 
-      return $updatePermited;
+      return $updateAllowed;
     }
 }
